@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut, User } from 'lucide-react';
 import ConfigurationPage from './ConfigurationPage';
 import UserManagement from './UserManagement';
-import PhotographyTaskManager from './PhotographyTaskManager';
 import { getIconComponent } from '../utils/icons';
 
 interface AppSelectorProps {
@@ -17,7 +16,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [loading, setLoading] = useState(true);
   const [showConfiguration, setShowConfiguration] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
-  const [showPhotographyTasks, setShowPhotographyTasks] = useState(false);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [systemAccess, setSystemAccess] = useState<{[key: string]: boolean}>({});
@@ -390,21 +388,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     // Para sistemas que requerem verificação específica, fazer verificação assíncrona
     if (!profile?.is_master && (app.id === 'triagem' || app.id === 'grana' || app.id === 'contrato' || app.id === 'automacao' || app.id === 'obrigacoes')) {
-      checkSpecificSystemAccess(app.id).then(hasAccess => {
-        if (!hasAccess) {
-          return; // Não faz nada, sem mensagens
-        }
-        
-        if (app.url === 'internal:configuracao') {
-          setShowConfiguration(true);
-          return;
-        }
-        
-        if (app.id === 'obrigacoes') {
-          setShowPhotographyTasks(true);
-          return;
-        }
-        
         window.open(app.url, '_blank');
       });
       return;
@@ -418,11 +401,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     if (app.url === 'internal:configuracao') {
       setShowConfiguration(true);
-      return;
-    }
-    
-    if (app.id === 'obrigacoes') {
-      setShowPhotographyTasks(true);
       return;
     }
     
@@ -448,16 +426,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           setCustomButtons(settings.appearance.buttons || []);
           // As configurações já são salvas automaticamente no ConfigurationPage
         }}
-      />
-    );
-  }
-
-  if (showPhotographyTasks) {
-    return (
-      <PhotographyTaskManager
-        user={user}
-        supabase={supabase}
-        onBack={() => setShowPhotographyTasks(false)}
       />
     );
   }
