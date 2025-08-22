@@ -389,7 +389,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Para sistemas que requerem verificação específica, fazer verificação assíncrona
     if (!profile?.is_master && (app.id === 'triagem' || app.id === 'grana' || app.id === 'contrato' || app.id === 'automacao' || app.id === 'obrigacoes')) {
         window.open(app.url, '_blank');
-      return;
     }
     
     // Para sistemas básicos ou master
