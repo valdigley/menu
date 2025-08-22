@@ -882,7 +882,7 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
                   }`}
                   title="Visualização em Quadro"
                 >
-                  <Kanban className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  <Grid className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
 
