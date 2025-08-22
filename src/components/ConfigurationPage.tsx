@@ -162,21 +162,56 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
   };
 
   const handleImageUpload = async (file: File, type: 'main' | 'lock') => {
-    if (!supabase) {
-      alert('Supabase não configurado');
-      return;
-    }
-
     setUploadingImage(true);
     try {
+      if (!supabase) {
+        // Fallback: usar FileReader para converter para base64
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target?.result as string;
+          updateSettings('appearance', {
+            [type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper']: base64
+          });
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // Tentar criar o bucket se não existir
+      try {
+        await supabase.storage.createBucket('wallpapers', {
+          public: true,
+          allowedMimeTypes: ['image/*'],
+          fileSizeLimit: 5242880 // 5MB
+        });
+      } catch (bucketError) {
+        console.log('Bucket já existe ou erro ao criar:', bucketError);
+      }
+
+      // Fazer upload da imagem
       const fileExt = file.name.split('.').pop();
       const fileName = `wallpaper-${type}-${Date.now()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('wallpapers')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro no upload:', error);
+        // Fallback para base64 se upload falhar
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target?.result as string;
+          updateSettings('appearance', {
+            [type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper']: base64
+          });
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('wallpapers')
@@ -188,7 +223,17 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
 
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
-      alert('Erro ao fazer upload da imagem');
+      
+      // Fallback final: usar base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        updateSettings('appearance', {
+          [type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper']: base64
+        });
+        alert('Imagem salva localmente (Supabase indisponível)');
+      };
+      reader.readAsDataURL(file);
     } finally {
       setUploadingImage(false);
     }
