@@ -329,11 +329,11 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
         {/* Kanban Board */}
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {Object.values(columns).map((column) => {
-              const columnTasks = getTasksByStatus(column.id);
+            {Object.entries(columns).map(([columnId, column]) => {
+              const columnTasks = getTasksByStatus(columnId);
               
               return (
-                <div key={column.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div key={columnId} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className={`${column.color} px-4 py-3`}>
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-white">{column.title}</h3>
@@ -343,7 +343,7 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
                     </div>
                   </div>
 
-                  <Droppable droppableId={column.id}>
+                  <Droppable droppableId={columnId}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
@@ -355,7 +355,71 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
                         }`}
                       >
                         {columnTasks.map((task, index) => (
-                          <TaskCard key={task.id} task={task} index={index} />
+                          <Draggable key={task.id} draggableId={task.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3 cursor-pointer hover:shadow-md transition-all ${
+                                  snapshot.isDragging ? 'rotate-2 shadow-xl ring-2 ring-blue-500' : ''
+                                }`}
+                                onClick={() => {
+                                  setSelectedTask(task);
+                                  setShowTaskDetails(true);
+                                }}
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <h3 className="font-medium text-gray-900 text-sm line-clamp-2">
+                                    {task.title}
+                                  </h3>
+                                  <div className="flex items-center gap-1 ml-2">
+                                    <Star className={`h-3 w-3 ${getPriorityColor(task.priority)}`} />
+                                    <span className="text-xs text-gray-500">{task.priority}</span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-3 w-3 text-gray-400" />
+                                    <span className="text-xs text-gray-600 truncate">{task.client_name}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <Tag className="h-3 w-3 text-gray-400" />
+                                    <span className="text-xs text-gray-600">{task.event_type}</span>
+                                  </div>
+
+                                  {task.event_date && (
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="h-3 w-3 text-gray-400" />
+                                      <span className="text-xs text-gray-600">{formatDate(task.event_date)}</span>
+                                    </div>
+                                  )}
+
+                                  {task.photos_count && (
+                                    <div className="flex items-center gap-2">
+                                      <Camera className="h-3 w-3 text-gray-400" />
+                                      <span className="text-xs text-gray-600">{task.photos_count} fotos</span>
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between pt-2">
+                                    {getPaymentStatusBadge(task.payment_status)}
+                                    
+                                    {task.delivery_date && (
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3 text-gray-400" />
+                                        <span className="text-xs text-gray-500">
+                                          {formatDate(task.delivery_date)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
                         ))}
                         {provided.placeholder}
                       </div>
@@ -366,27 +430,6 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
             })}
           </div>
         </DragDropContext>
-
-        {tasks.length === 0 && (
-          <div className="text-center py-12">
-            <Camera className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Nenhuma tarefa encontrada
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Comece criando sua primeira tarefa fotográfica.
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={() => setShowAddTask(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Tarefa
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Task Details Modal */}
@@ -530,6 +573,4 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
       </AnimatePresence>
     </div>
   );
-};
-
 export default PhotographyTaskManager;
