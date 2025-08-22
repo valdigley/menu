@@ -573,4 +573,6 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
       </AnimatePresence>
     </div>
   );
+};
+
 export default PhotographyTaskManager;
