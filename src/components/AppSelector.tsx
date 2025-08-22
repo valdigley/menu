@@ -373,6 +373,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         return;
       }
       
+      if (app.id === 'obrigacoes') {
+        setShowPhotographyTasks(true);
+        return;
+      }
+      
       window.open(app.url, '_blank');
       return;
     }
@@ -399,11 +404,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           return;
         }
         
-        if (app.id === 'obrigacoes') {
-          setShowPhotographyTasks(true);
-          return;
-        }
-        
         window.open(app.url, '_blank');
       });
       return;
@@ -417,6 +417,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     if (app.url === 'internal:configuracao') {
       setShowConfiguration(true);
+      return;
+    }
+    
+    if (app.id === 'obrigacoes') {
+      setShowPhotographyTasks(true);
       return;
     }
     
