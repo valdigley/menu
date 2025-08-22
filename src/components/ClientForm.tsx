@@ -68,6 +68,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [selectedEventType, setSelectedEventType] = useState<any>(null);
 
   // Carregar tipos de eventos padrão se não fornecidos
   const defaultEventTypes = [
@@ -113,6 +114,15 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
   const updateField = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Atualizar tipo de evento selecionado
+    if (field === 'tipo_evento') {
+      const eventType = availableEventTypes.find(type => type.id === value);
+      setSelectedEventType(eventType);
+      // Limpar pacote selecionado quando mudar tipo
+      setFormData(prev => ({ ...prev, package_id: '', package_price: 0 }));
+    }
+    
     // Limpar erro do campo quando usuário começar a digitar
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -459,16 +469,18 @@ const ClientForm: React.FC<ClientFormProps> = ({
                       <select
                         value={formData.tipo_evento}
                         onChange={(e) => {
+                          console.log('Selecionando tipo de evento:', e.target.value);
                           updateField('tipo_evento', e.target.value);
-                          updateField('package_id', ''); // Reset package selection
                         }}
                         className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                           errors.tipo_evento ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
                         <option value="">Selecione o tipo</option>
-                        {availableEventTypes.map(type => (
-                          <option key={type.id} value={type.id}>{type.name}</option>
+                        {availableEventTypes.map((type, index) => (
+                          <option key={`${type.id}-${index}`} value={type.id}>
+                            {type.name}
+                          </option>
                         ))}
                       </select>
                       {errors.tipo_evento && (
@@ -525,7 +537,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
                     </div>
 
                     {/* Campos específicos por tipo de evento */}
-                    {formData.tipo_evento === 'casamento' && (
+                    {(formData.tipo_evento === 'casamento' || selectedEventType?.id === 'casamento') && (
                       <>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -581,7 +593,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
                       </>
                     )}
 
-                    {formData.tipo_evento === 'aniversario' && (
+                    {(formData.tipo_evento === 'aniversario' || selectedEventType?.id === 'aniversario') && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Nome do Aniversariante
