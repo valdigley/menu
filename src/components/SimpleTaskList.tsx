@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Calendar, Camera, Edit, Trash2, Check, X } from 'lucide-react';
+import { ArrowLeft, Plus, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SimpleTaskListProps {
@@ -84,7 +84,6 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
 
       if (error) throw error;
 
-      // Adicionar à lista local
       const taskForList: Task = {
         id: data.id,
         title: newTask.title.trim(),
@@ -96,7 +95,6 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
 
       setTasks(prev => [...prev, taskForList].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       
-      // Limpar formulário
       setNewTask({
         title: '',
         date: '',
@@ -105,7 +103,6 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
       setShowAddForm(false);
     } catch (error) {
       console.error('Erro ao adicionar tarefa:', error);
-      alert('Erro ao adicionar tarefa');
     }
   };
 
@@ -132,7 +129,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!supabase || !confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    if (!supabase) return;
 
     try {
       const { error } = await supabase
@@ -148,35 +145,22 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
     }
   };
 
-  const getServiceIcon = (serviceType: string) => {
-    if (serviceType.includes('Foto') || serviceType.includes('Ensaio') || serviceType.includes('Casamento')) {
-      return <Camera className="h-4 w-4" />;
-    }
-    return <Calendar className="h-4 w-4" />;
-  };
-
-  const getServiceColor = (serviceType: string) => {
-    const colors = {
-      'Ensaio Fotográfico': 'bg-blue-100 text-blue-800',
-      'Casamento': 'bg-pink-100 text-pink-800',
-      'Aniversário': 'bg-yellow-100 text-yellow-800',
-      'Formatura': 'bg-purple-100 text-purple-800',
-      'Corporativo': 'bg-gray-100 text-gray-800',
-      'Produto': 'bg-green-100 text-green-800',
-      'Evento': 'bg-orange-100 text-orange-800',
-      'Edição de Fotos': 'bg-indigo-100 text-indigo-800',
-      'Entrega de Álbum': 'bg-red-100 text-red-800',
-      'Reunião com Cliente': 'bg-teal-100 text-teal-800'
-    };
-    return colors[serviceType as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Hoje';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Amanhã';
+    } else {
+      return date.toLocaleDateString('pt-BR', {
+        day: 'numeric',
+        month: 'short'
+      });
+    }
   };
 
   const isOverdue = (dateString: string, completed: boolean) => {
@@ -184,115 +168,102 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
     return new Date(dateString) < new Date();
   };
 
+  const getServiceColor = (serviceType: string) => {
+    const colors = {
+      'Ensaio Fotográfico': '#3b82f6',
+      'Casamento': '#ec4899',
+      'Aniversário': '#f59e0b',
+      'Formatura': '#8b5cf6',
+      'Corporativo': '#6b7280',
+      'Produto': '#10b981',
+      'Evento': '#f97316',
+      'Edição de Fotos': '#6366f1',
+      'Entrega de Álbum': '#ef4444',
+      'Reunião com Cliente': '#14b8a6'
+    };
+    return colors[serviceType as keyof typeof colors] || '#6b7280';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Header minimalista */}
+      <div className="border-b border-gray-800">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={onBack}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
               >
                 <ArrowLeft className="h-5 w-5" />
-              </motion.button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Lista de Tarefas
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Gerencie suas tarefas fotográficas
-                </p>
-              </div>
+              </button>
+              <h1 className="text-xl font-medium text-white">
+                Tarefas
+              </h1>
             </div>
             
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
             >
               <Plus className="h-4 w-4" />
               Nova Tarefa
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Add Task Form */}
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Formulário de adicionar tarefa */}
         <AnimatePresence>
           {showAddForm && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Nova Tarefa
-              </h3>
-              
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Título da Tarefa
-                  </label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Nome da tarefa..."
+                  className="w-full bg-transparent border-none text-lg placeholder-gray-500 focus:outline-none"
+                  autoFocus
+                />
+                
+                <div className="flex gap-4">
                   <input
-                    type="text"
-                    value={newTask.title}
-                    onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Ex: Ensaio da Maria Silva"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    type="date"
+                    value={newTask.date}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, date: e.target.value }))}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Data
-                    </label>
-                    <input
-                      type="date"
-                      value={newTask.date}
-                      onChange={(e) => setNewTask(prev => ({ ...prev, date: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Tipo de Serviço
-                    </label>
-                    <select
-                      value={newTask.service_type}
-                      onChange={(e) => setNewTask(prev => ({ ...prev, service_type: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                    >
-                      {serviceTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
+                  
+                  <select
+                    value={newTask.service_type}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, service_type: e.target.value }))}
+                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  >
+                    {serviceTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={addTask}
                     disabled={!newTask.title.trim() || !newTask.date}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Plus className="h-4 w-4" />
                     Adicionar
                   </button>
                   <button
                     onClick={() => setShowAddForm(false)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
                   >
-                    <X className="h-4 w-4" />
                     Cancelar
                   </button>
                 </div>
@@ -301,96 +272,81 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
           )}
         </AnimatePresence>
 
-        {/* Tasks List */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        {/* Lista de tarefas */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-gray-500 mb-4">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+                <Check className="h-8 w-8 text-gray-600" />
+              </div>
+              <p className="text-lg mb-2">Nenhuma tarefa ainda</p>
+              <p className="text-sm">Adicione sua primeira tarefa para começar</p>
             </div>
-          ) : tasks.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Nenhuma tarefa encontrada
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Comece adicionando sua primeira tarefa.
-              </p>
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {tasks.map((task, index) => (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className={`group flex items-center gap-4 p-4 rounded-lg hover:bg-gray-800 transition-colors ${
+                  task.completed ? 'opacity-60' : ''
+                } ${isOverdue(task.date, task.completed) ? 'bg-red-900/20' : ''}`}
               >
-                <Plus className="h-4 w-4" />
-                Nova Tarefa
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {tasks.map((task, index) => (
-                <motion.div
-                  key={task.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                    task.completed ? 'opacity-60' : ''
-                  } ${isOverdue(task.date, task.completed) ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                <button
+                  onClick={() => toggleTask(task.id, !task.completed)}
+                  className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    task.completed
+                      ? 'bg-green-500 border-green-500 text-white'
+                      : 'border-gray-600 hover:border-green-500'
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <button
-                        onClick={() => toggleTask(task.id, !task.completed)}
-                        className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                          task.completed
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
-                        }`}
-                      >
-                        {task.completed && <Check className="h-3 w-3" />}
-                      </button>
+                  {task.completed && <Check className="h-3 w-3" />}
+                </button>
 
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className={`font-medium ${
-                            task.completed 
-                              ? 'line-through text-gray-500 dark:text-gray-400' 
-                              : 'text-gray-900 dark:text-white'
-                          }`}>
-                            {task.title}
-                          </h3>
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getServiceColor(task.service_type)}`}>
-                            {getServiceIcon(task.service_type)}
-                            {task.service_type}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span className={isOverdue(task.date, task.completed) ? 'text-red-600 font-medium' : ''}>
-                              {formatDate(task.date)}
-                              {isOverdue(task.date, task.completed) && ' (Atrasada)'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Excluir tarefa"
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span className={`font-medium ${
+                      task.completed ? 'line-through text-gray-500' : 'text-white'
+                    }`}>
+                      {task.title}
+                    </span>
+                    
+                    <div className="flex items-center gap-2 text-xs">
+                      <span
+                        className="px-2 py-1 rounded-full text-white text-xs font-medium"
+                        style={{ backgroundColor: getServiceColor(task.service_type) }}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                        {task.service_type}
+                      </span>
+                      
+                      <span className={`text-xs ${
+                        isOverdue(task.date, task.completed) 
+                          ? 'text-red-400 font-medium' 
+                          : 'text-gray-400'
+                      }`}>
+                        {formatDate(task.date)}
+                      </span>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
+                </div>
+
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-red-400 transition-all rounded-lg hover:bg-gray-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
