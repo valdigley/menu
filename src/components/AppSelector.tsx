@@ -376,15 +376,21 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Prevenir múltiplas execuções
     if (app.isProcessing) return;
     
+    // Verificar URLs internas PRIMEIRO, antes de qualquer outra verificação
+    if (app.url === 'internal:obrigacoes') {
+      setShowTaskList(true);
+      return;
+    }
+    
+    if (app.url === 'internal:configuracao') {
+      setShowConfiguration(true);
+      return;
+    }
+    
     // Master sempre tem acesso a tudo
     if (profile?.is_master) {
       if (app.id === 'admin') {
         setShowUserManagement(true);
-        return;
-      }
-      
-      if (app.url === 'internal:configuracao') {
-        setShowConfiguration(true);
         return;
       }
       
@@ -405,16 +411,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     }
     
     if (app.id === 'tarefas') {
-      setShowTaskList(true);
-      return;
-    }
-    
-    if (app.url === 'internal:configuracao') {
-      setShowConfiguration(true);
-      return;
-    }
-    
-    if (app.url === 'internal:obrigacoes') {
       setShowTaskList(true);
       return;
     }
