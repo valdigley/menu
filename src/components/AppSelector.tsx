@@ -370,19 +370,36 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Prevenir múltiplas execuções
     if (app.isProcessing) return;
     
-    // Verificar URLs internas PRIMEIRO, antes de qualquer outra verificação
-    if (app.url === 'internal:obrigacoes') {
-      setShowTaskList(true);
+    // Master sempre tem acesso a tudo
+    if (profile?.is_master) {
+      // Verificar URLs internas para master
+      if (app.url === 'internal:configuracao' || app.id === 'configuracao') {
+        setShowConfiguration(true);
+        return;
+      }
+      
+      if (app.id === 'admin') {
+        setShowUserManagement(true);
+        return;
+      }
+      
+      if (app.url === 'internal:obrigacoes' || app.id === 'obrigacoes') {
+        setShowTaskList(true);
+        return;
+      }
+      
+      if (app.url === 'internal:contratos' || app.id === 'contrato') {
+        setShowContractSystem(true);
+        return;
+      }
+      
+      window.open(app.url, '_blank');
       return;
     }
     
-    if (app.id === 'obrigacoes') {
+    // Verificar URLs internas PRIMEIRO para usuários normais
+    if (app.url === 'internal:obrigacoes' || app.id === 'obrigacoes') {
       setShowTaskList(true);
-      return;
-    }
-    
-    if (app.url === 'internal:configuracao') {
-      setShowConfiguration(true);
       return;
     }
     
@@ -391,34 +408,9 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
-    // Verificar se é o sistema de contratos para usar SSO
-    if (app.id === 'contrato' && user) {
-      // Abrir sistema de contratos diretamente com SSO
-      SSOManager.openSystemWithSSO(app.url, user);
-      return;
-    }
-    
-    // Master sempre tem acesso a tudo
-    if (profile?.is_master) {
-      if (app.id === 'admin') {
-        setShowUserManagement(true);
-        return;
-      }
-      
-      window.open(app.url, '_blank');
-      return;
-    }
-    
     // Verificar se o sistema está desabilitado ou sem acesso
     if (app.isActive === false || !app.hasAccess) {
       return; // Não faz nada, sem mensagens
-    }
-    
-    // Para sistemas que requerem verificação específica, fazer verificação assíncrona
-    // Abrir URL externa para todos os outros casos
-    if (app.id === 'admin') {
-      setShowUserManagement(true);
-      return;
     }
     
     // Abrir link externo

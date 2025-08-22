@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import LoginForm from './components/LoginForm';
 import AppSelector from './components/AppSelector';
+import ClientForm from './components/ClientForm';
 
 // Cliente Supabase simples
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -15,6 +17,7 @@ if (supabaseUrl && supabaseKey) {
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     console.log('🚀 App iniciando...');
@@ -56,6 +59,28 @@ function App() {
 
   console.log('🎯 App render:', { user: !!user, loading });
 
+  // Se estiver na rota do formulário de cliente, mostrar sem autenticação
+  if (location.pathname === '/formulario-cliente') {
+    const loadCompanySettings = () => {
+      try {
+        const savedSettings = localStorage.getItem('systemSettings');
+        if (savedSettings) {
+          return JSON.parse(savedSettings);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+      }
+      return {
+        company: {
+          name: 'Fotografia Profissional',
+          owner: 'Fotógrafo'
+        }
+      };
+    };
+
+    return <ClientForm companySettings={loadCompanySettings()} />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -74,7 +99,15 @@ function App() {
     return <LoginForm supabase={supabase} />;
   }
 
-  return <AppSelector user={user} supabase={supabase} />;
+  return (
+    <Routes>
+      <Route 
+        path="/" 
+        element={<AppSelector user={user} supabase={supabase} />} 
+      />
+      <Route path="*" element={<AppSelector user={user} supabase={supabase} />} />
+    </Routes>
+  );
 }
 
 export default App;

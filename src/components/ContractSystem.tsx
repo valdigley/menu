@@ -638,11 +638,25 @@ const ContractForm: React.FC<{
     return basePrice - discount;
   };
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
+
+  const canProceedToStep2 = formData.nome_completo && formData.email;
+  const canProceedToStep3 = canProceedToStep2 && formData.event_type_id && formData.data_evento;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <motion.button
@@ -657,23 +671,50 @@ const ContractForm: React.FC<{
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   {isEditing ? 'Editar Contrato' : 'Novo Contrato'}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Preencha os dados do contrato
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  {[1, 2, 3].map((step) => (
+                    <div
+                      key={step}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        step <= currentStep
+                          ? 'bg-blue-500'
+                          : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    />
+                  ))}
+                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                    Etapa {currentStep} de {totalSteps}
+                  </span>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onCancel}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancelar
-              </motion.button>
+            <div className="flex items-center gap-2">
+              {currentStep > 1 && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={prevStep}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Voltar
+                </motion.button>
+              )}
               
+              {currentStep < totalSteps ? (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={nextStep}
+                  disabled={
+                    (currentStep === 1 && !canProceedToStep2) ||
+                    (currentStep === 2 && !canProceedToStep3)
+                  }
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Próximo
+                </motion.button>
+              ) : (
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -688,12 +729,13 @@ const ContractForm: React.FC<{
                 )}
                 Salvar
               </motion.button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
             <div className="flex items-center gap-3">
@@ -704,350 +746,400 @@ const ContractForm: React.FC<{
         )}
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="space-y-8">
-            {/* Dados Pessoais */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Dados Pessoais
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Dados do Cliente
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Informações básicas para contato
+                  </p>
+                </div>
+
+                <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nome Completo *
                   </label>
                   <input
                     type="text"
                     value={formData.nome_completo || ''}
                     onChange={(e) => updateField('nome_completo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    placeholder="Digite o nome completo"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    CPF
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.cpf || ''}
-                    onChange={(e) => updateField('cpf', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email *
                   </label>
                   <input
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => updateField('email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    placeholder="email@exemplo.com"
                     required
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.whatsapp || ''}
-                    onChange={(e) => updateField('whatsapp', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.whatsapp || ''}
+                      onChange={(e) => updateField('whatsapp', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      CPF
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cpf || ''}
+                      onChange={(e) => updateField('cpf', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Data de Nascimento
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.data_nascimento || ''}
-                    onChange={(e) => updateField('data_nascimento', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Endereço
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Endereço Completo
                   </label>
                   <input
                     type="text"
                     value={formData.endereco || ''}
                     onChange={(e) => updateField('endereco', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cidade
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.cidade || ''}
-                    onChange={(e) => updateField('cidade', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    placeholder="Rua, número, bairro, cidade"
                   />
                 </div>
               </div>
-            </div>
+              </motion.div>
+            )}
 
-            {/* Dados do Evento */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Dados do Evento
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tipo de Evento
-                  </label>
-                  <select
-                    value={formData.event_type_id || ''}
-                    onChange={(e) => {
-                      console.log('Selecionando tipo de evento:', e.target.value);
-                      updateField('event_type_id', e.target.value);
-                      const eventType = eventTypes.find(et => et.id === e.target.value);
-                      if (eventType) {
-                        console.log('Tipo de evento encontrado:', eventType);
-                        updateField('tipo_evento', eventType.name);
-                        // Limpar pacote selecionado quando mudar tipo de evento
-                        updateField('package_id', '');
-                        updateField('package_price', 0);
-                        updateField('final_price', 0);
-                      } else {
-                        console.log('Tipo de evento não encontrado para ID:', e.target.value);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Selecione o tipo</option>
-                    {eventTypes.map(type => (
-                      <option key={type.id} value={type.id}>{type.name}</option>
-                    ))}
-                  </select>
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Detalhes do Evento
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Informações sobre o evento a ser fotografado
+                  </p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Data do Evento
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.data_evento || ''}
-                    onChange={(e) => updateField('data_evento', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Horário do Evento
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.horario_evento || ''}
-                    onChange={(e) => updateField('horario_evento', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Local da Festa
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.local_festa || ''}
-                    onChange={(e) => updateField('local_festa', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                {formData.tipo_evento === 'Casamento' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Nome dos Noivos
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.nome_noivos || ''}
-                        onChange={(e) => updateField('nome_noivos', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Local da Cerimônia
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.local_cerimonia || ''}
-                        onChange={(e) => updateField('local_cerimonia', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Local do Pré-Wedding
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.local_pre_wedding || ''}
-                        onChange={(e) => updateField('local_pre_wedding', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Local do Making Of
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.local_making_of || ''}
-                        onChange={(e) => updateField('local_making_of', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </>
-                )}
-                
-                {formData.tipo_evento === 'Aniversário' && (
+
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Nome do Aniversariante
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Tipo de Evento *
+                    </label>
+                    <select
+                      value={formData.event_type_id || ''}
+                      onChange={(e) => {
+                        console.log('Selecionando tipo de evento:', e.target.value);
+                        updateField('event_type_id', e.target.value);
+                        const eventType = eventTypes.find(et => et.id === e.target.value);
+                        if (eventType) {
+                          console.log('Tipo de evento encontrado:', eventType);
+                          updateField('tipo_evento', eventType.name);
+                          // Limpar pacote selecionado quando mudar tipo de evento
+                          updateField('package_id', '');
+                          updateField('package_price', 0);
+                          updateField('final_price', 0);
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                      required
+                    >
+                      <option value="">Selecione o tipo de evento</option>
+                      {eventTypes.map(type => (
+                        <option key={type.id} value={type.id}>{type.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Data do Evento *
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.data_evento || ''}
+                        onChange={(e) => updateField('data_evento', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Horário
+                      </label>
+                      <input
+                        type="time"
+                        value={formData.horario_evento || ''}
+                        onChange={(e) => updateField('horario_evento', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                      />
+                    </div>
+                  </div>
+                
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Local do Evento
                     </label>
                     <input
                       type="text"
-                      value={formData.nome_aniversariante || ''}
-                      onChange={(e) => updateField('nome_aniversariante', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      value={formData.local_festa || ''}
+                      onChange={(e) => updateField('local_festa', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                      placeholder="Nome do local, endereço"
                     />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Pacotes e Valores */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Pacotes e Valores
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Pacote
-                  </label>
-                  <select
-                    value={formData.package_id || ''}
-                    onChange={(e) => {
-                      console.log('Selecionando pacote:', e.target.value);
-                      const selectedPackage = packages.find(p => p.id === e.target.value);
-                      console.log('Pacote encontrado:', selectedPackage);
-                      console.log('Pacotes filtrados disponíveis:', filteredPackages);
-                      updateField('package_id', e.target.value);
-                      if (selectedPackage) {
-                        updateField('package_price', selectedPackage.price);
-                        updateField('final_price', calculateFinalPrice());
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Selecione um pacote</option>
-                    {!formData.event_type_id && (
-                      <option value="" disabled>Primeiro selecione o tipo de evento</option>
-                    )}
-                    {filteredPackages.map(pkg => (
-                      <option key={pkg.id} value={pkg.id}>
-                        {pkg.name} - R$ {pkg.price.toFixed(2)}
-                      </option>
-                    ))}
-                  </select>
-                  {formData.event_type_id && filteredPackages.length === 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Nenhum pacote disponível para este tipo de evento. Verifique se os pacotes foram criados no banco de dados.
-                    </p>
+                
+                  {formData.tipo_evento === 'Casamento' && (
+                    <div className="space-y-4 p-4 bg-pink-50 dark:bg-pink-900/20 rounded-xl border border-pink-200 dark:border-pink-800">
+                      <h4 className="font-medium text-pink-800 dark:text-pink-200">Detalhes do Casamento</h4>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Nome dos Noivos
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.nome_noivos || ''}
+                          onChange={(e) => updateField('nome_noivos', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                          placeholder="João & Maria"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Local da Cerimônia
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.local_cerimonia || ''}
+                          onChange={(e) => updateField('local_cerimonia', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                          placeholder="Igreja, cartório..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                
+                  {formData.tipo_evento === 'Aniversário' && (
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nome do Aniversariante
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nome_aniversariante || ''}
+                        onChange={(e) => updateField('nome_aniversariante', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        placeholder="Nome do aniversariante"
+                      />
+                    </div>
                   )}
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Método de Pagamento
-                  </label>
-                  <select
-                    value={formData.payment_method_id || ''}
-                    onChange={(e) => {
-                      updateField('payment_method_id', e.target.value);
-                      updateField('final_price', calculateFinalPrice());
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Selecione o método</option>
-                    {paymentMethods.map(method => (
-                      <option key={method.id} value={method.id}>
-                        {method.name} {method.discount_percentage > 0 && `(${method.discount_percentage}% desconto)`}
-                      </option>
-                    ))}
-                  </select>
+              </motion.div>
+            )}
+
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Pacote e Pagamento
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Escolha o pacote e forma de pagamento
+                  </p>
                 </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Pacote
+                    </label>
+                    <select
+                      value={formData.package_id || ''}
+                      onChange={(e) => {
+                        console.log('Selecionando pacote:', e.target.value);
+                        const selectedPackage = packages.find(p => p.id === e.target.value);
+                        console.log('Pacote encontrado:', selectedPackage);
+                        updateField('package_id', e.target.value);
+                        if (selectedPackage) {
+                          updateField('package_price', selectedPackage.price);
+                          updateField('final_price', selectedPackage.price);
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    >
+                      <option value="">Selecione um pacote</option>
+                      {!formData.event_type_id && (
+                        <option value="" disabled>Primeiro selecione o tipo de evento</option>
+                      )}
+                      {filteredPackages.map(pkg => (
+                        <option key={pkg.id} value={pkg.id}>
+                          {pkg.name} - R$ {pkg.price.toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.event_type_id && filteredPackages.length === 0 && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Nenhum pacote disponível para este tipo de evento.
+                      </p>
+                    )}
+                  </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Valor do Pacote
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.package_price || ''}
-                    onChange={(e) => {
-                      updateField('package_price', parseFloat(e.target.value) || 0);
-                      updateField('final_price', calculateFinalPrice());
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Método de Pagamento
+                    </label>
+                    <select
+                      value={formData.payment_method_id || ''}
+                      onChange={(e) => {
+                        updateField('payment_method_id', e.target.value);
+                        const paymentMethod = paymentMethods.find(pm => pm.id === e.target.value);
+                        if (paymentMethod && formData.package_price) {
+                          const discount = formData.package_price * paymentMethod.discount_percentage / 100;
+                          updateField('final_price', formData.package_price - discount);
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                    >
+                      <option value="">Selecione o método</option>
+                      {paymentMethods.map(method => (
+                        <option key={method.id} value={method.id}>
+                          {method.name} {method.discount_percentage > 0 && `(${method.discount_percentage}% desconto)`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Valor Final
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.final_price || calculateFinalPrice()}
-                    onChange={(e) => updateField('final_price', parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Valor do Pacote
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.package_price || ''}
+                        onChange={(e) => {
+                          const price = parseFloat(e.target.value) || 0;
+                          updateField('package_price', price);
+                          const paymentMethod = paymentMethods.find(pm => pm.id === formData.payment_method_id);
+                          if (paymentMethod) {
+                            const discount = price * paymentMethod.discount_percentage / 100;
+                            updateField('final_price', price - discount);
+                          } else {
+                            updateField('final_price', price);
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                        placeholder="0,00"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Valor Final
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formData.final_price || 0}
+                          onChange={(e) => updateField('final_price', parseFloat(e.target.value) || 0)}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all font-semibold"
+                          placeholder="0,00"
+                        />
+                        {formData.package_price && formData.final_price && formData.final_price < formData.package_price && (
+                          <div className="absolute -bottom-6 left-0 text-xs text-green-600 dark:text-green-400">
+                            Economia: R$ {(formData.package_price - formData.final_price).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Dia Preferido para Pagamento
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="28"
-                    value={formData.preferred_payment_day || ''}
-                    onChange={(e) => updateField('preferred_payment_day', parseInt(e.target.value) || null)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder="Ex: 10 (dia 10 de cada mês)"
-                  />
+                  {/* Resumo do Contrato */}
+                  {formData.nome_completo && formData.tipo_evento && formData.final_price && (
+                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-3">Resumo do Contrato</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Cliente:</span>
+                          <span className="font-medium text-gray-900 dark:text-white">{formData.nome_completo}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Evento:</span>
+                          <span className="font-medium text-gray-900 dark:text-white">{formData.tipo_evento}</span>
+                        </div>
+                        {formData.data_evento && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Data:</span>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {new Date(formData.data_evento).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t border-blue-200 dark:border-blue-700 pt-2 mt-2">
+                          <span className="text-gray-600 dark:text-gray-400">Valor Total:</span>
+                          <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                            R$ {formData.final_price.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
