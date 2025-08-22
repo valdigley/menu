@@ -589,7 +589,7 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                           className={`flex-1 overflow-y-auto space-y-3 min-h-0 p-2 rounded-lg transition-all ${
-                            snapshot.isDraggingOver 
+                            snapshot.isDragging
                               ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-600' 
                               : 'bg-gray-50 dark:bg-gray-800'
                           }`}
