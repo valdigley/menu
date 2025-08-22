@@ -315,17 +315,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       url: 'internal:obrigacoes',
       hasAccess: hasBasicSystemAccess('obrigacoes'),
       isActive: true
-    },
-    {
-      id: 'tarefas',
-      name: 'Tarefas',
-      description: 'Lista simples de tarefas',
-      icon: 'CheckSquare',
-      color: 'green',
-      backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'internal:tarefas',
-      hasAccess: hasBasicSystemAccess('tarefas'),
-      isActive: true
     }
   ];
 
@@ -407,11 +396,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Abrir URL externa para todos os outros casos
     if (app.id === 'admin') {
       setShowUserManagement(true);
-      return;
-    }
-    
-    if (app.id === 'tarefas') {
-      setShowTaskList(true);
       return;
     }
     
