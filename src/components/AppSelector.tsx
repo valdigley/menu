@@ -415,7 +415,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     }
     
     if (app.url === 'internal:obrigacoes') {
-      setShowConfiguration(true);
+      setShowTaskList(true);
       return;
     }
     
