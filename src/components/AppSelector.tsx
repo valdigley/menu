@@ -3,7 +3,9 @@ import { Moon, Sun, LogOut, User } from 'lucide-react';
 import ConfigurationPage from './ConfigurationPage';
 import UserManagement from './UserManagement';
 import SimpleTaskList from './SimpleTaskList';
+import ContractIntegration from './ContractIntegration';
 import { getIconComponent } from '../utils/icons';
+import { SSOManager } from '../utils/sso';
 
 interface AppSelectorProps {
   user: any;
@@ -18,6 +20,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [showConfiguration, setShowConfiguration] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showTaskList, setShowTaskList] = useState(false);
+  const [showContractIntegration, setShowContractIntegration] = useState(false);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [systemAccess, setSystemAccess] = useState<{[key: string]: boolean}>({});
@@ -376,6 +379,13 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
+    // Verificar se é o sistema de contratos para usar SSO
+    if (app.id === 'contrato' && user) {
+      // Abrir integração de contratos
+      setShowContractIntegration(true);
+      return;
+    }
+    
     // Master sempre tem acesso a tudo
     if (profile?.is_master) {
       if (app.id === 'admin') {
@@ -432,6 +442,16 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         user={user}
         supabase={supabase}
         onBack={() => setShowTaskList(false)}
+      />
+    );
+  }
+
+  if (showContractIntegration) {
+    return (
+      <ContractIntegration
+        user={user}
+        supabase={supabase}
+        onBack={() => setShowContractIntegration(false)}
       />
     );
   }
