@@ -360,6 +360,9 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   }
 
   const handleAppClick = (app: typeof apps[0]) => {
+    // Prevenir múltiplas execuções
+    if (app.isProcessing) return;
+    
     // Master sempre tem acesso a tudo
     if (profile?.is_master) {
       if (app.id === 'admin') {
@@ -369,11 +372,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       
       if (app.url === 'internal:configuracao') {
         setShowConfiguration(true);
-        return;
-      }
-      
-      if (app.id === 'obrigacoes') {
-        setShowPhotographyTasks(true);
         return;
       }
       
@@ -387,11 +385,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     }
     
     // Para sistemas que requerem verificação específica, fazer verificação assíncrona
-    if (!profile?.is_master && (app.id === 'triagem' || app.id === 'grana' || app.id === 'contrato' || app.id === 'automacao' || app.id === 'obrigacoes')) {
-        window.open(app.url, '_blank');
-    }
-    
-    // Para sistemas básicos ou master
+    // Abrir URL externa para todos os outros casos
     if (app.id === 'admin') {
       setShowUserManagement(true);
       return;
@@ -402,6 +396,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
+    // Abrir link externo
     window.open(app.url, '_blank');
   };
 
