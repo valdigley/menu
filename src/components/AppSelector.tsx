@@ -4,6 +4,7 @@ import ConfigurationPage from './ConfigurationPage';
 import UserManagement from './UserManagement';
 import SimpleTaskList from './SimpleTaskList';
 import ContractIntegration from './ContractIntegration';
+import ContractSystem from './ContractSystem';
 import { getIconComponent } from '../utils/icons';
 import { SSOManager } from '../utils/sso';
 
@@ -21,6 +22,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showTaskList, setShowTaskList] = useState(false);
   const [showContractIntegration, setShowContractIntegration] = useState(false);
+  const [showContractSystem, setShowContractSystem] = useState(false);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [systemAccess, setSystemAccess] = useState<{[key: string]: boolean}>({});
@@ -293,9 +295,9 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       icon: 'FileText',
       color: 'blue',
       backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://contratos.exemplo.com',
+      url: 'internal:contratos',
       hasAccess: hasBasicSystemAccess('contrato'),
-      isActive: false
+      isActive: true
     },
     {
       id: 'automacao',
@@ -379,6 +381,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
+    if (app.url === 'internal:contratos') {
+      setShowContractSystem(true);
+      return;
+    }
+    
     // Verificar se é o sistema de contratos para usar SSO
     if (app.id === 'contrato' && user) {
       // Abrir sistema de contratos diretamente com SSO
@@ -452,6 +459,16 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         user={user}
         supabase={supabase}
         onBack={() => setShowContractIntegration(false)}
+      />
+    );
+  }
+
+  if (showContractSystem) {
+    return (
+      <ContractSystem
+        user={user}
+        supabase={supabase}
+        onBack={() => setShowContractSystem(false)}
       />
     );
   }
