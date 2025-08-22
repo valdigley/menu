@@ -103,8 +103,8 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
           task_payments (*)
         `)
         .eq('user_id', user.id)
-        .order('priority', { ascending: false })
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .order('priority', { ascending: false });
 
       if (error) throw error;
       setTasks(tasksData || []);
