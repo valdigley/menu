@@ -22,7 +22,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState({
     title: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0], // Data de hoje como padrão
     service_type: ''
   });
 
@@ -30,13 +30,17 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
 
   // Carregar tipos de eventos das configurações
   useEffect(() => {
+    console.log('🔄 Carregando tipos de eventos...');
     const savedSettings = localStorage.getItem('systemSettings');
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
+        console.log('📋 Configurações carregadas:', parsedSettings);
         if (parsedSettings.eventTypes?.types) {
+          console.log('✅ Tipos de eventos encontrados:', parsedSettings.eventTypes.types);
           setEventTypes(parsedSettings.eventTypes.types);
         } else {
+          console.log('⚠️ Usando tipos padrão - configurações não encontradas');
           // Fallback para tipos padrão
           setEventTypes([
             { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
@@ -53,6 +57,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
         }
       } catch (error) {
         console.error('Erro ao carregar tipos de eventos:', error);
+        console.log('⚠️ Usando tipos padrão - erro no parse');
         // Fallback para tipos padrão em caso de erro
         setEventTypes([
           { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
@@ -67,19 +72,31 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
           { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6' }
         ]);
       }
-    }
-    
-    // Definir primeiro tipo como padrão se não há seleção
-    if (eventTypes.length > 0 && !newTask.service_type) {
-      setNewTask(prev => ({ ...prev, service_type: eventTypes[0].name }));
+    } else {
+      console.log('⚠️ Usando tipos padrão - sem configurações salvas');
+      // Fallback para tipos padrão se não há configurações
+      setEventTypes([
+        { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
+        { id: 'casamento', name: 'Casamento', days: 30, color: '#ec4899' },
+        { id: 'aniversario', name: 'Aniversário', days: 14, color: '#f59e0b' },
+        { id: 'formatura', name: 'Formatura', days: 21, color: '#8b5cf6' },
+        { id: 'corporativo', name: 'Corporativo', days: 10, color: '#6b7280' },
+        { id: 'produto', name: 'Produto', days: 5, color: '#10b981' },
+        { id: 'evento', name: 'Evento', days: 14, color: '#f97316' },
+        { id: 'edicao', name: 'Edição de Fotos', days: 3, color: '#6366f1' },
+        { id: 'album', name: 'Entrega de Álbum', days: 45, color: '#ef4444' },
+        { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6' }
+      ]);
     }
   }, []);
 
   useEffect(() => {
+    console.log('🔄 Carregando tarefas e definindo tipo padrão...');
     loadTasks();
     
     // Definir primeiro tipo como padrão quando eventTypes carrega
     if (eventTypes.length > 0 && !newTask.service_type) {
+      console.log('✅ Definindo tipo padrão:', eventTypes[0].name);
       setNewTask(prev => ({ ...prev, service_type: eventTypes[0].name }));
     }
   }, [eventTypes]);
@@ -150,8 +167,8 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
       
       setNewTask({
         title: '',
-        date: taskDate, // Manter a data para próxima tarefa
-        service_type: eventTypes.length > 0 ? eventTypes[0].name : 'Ensaio Fotográfico'
+        date: new Date().toISOString().split('T')[0], // Sempre usar data de hoje
+        service_type: newTask.service_type // Manter o tipo selecionado
       });
     } catch (error) {
       console.error('Erro ao adicionar tarefa:', error);
