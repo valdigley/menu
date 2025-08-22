@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Search, Star, Calendar, User, Camera, Image, Album, Package, Link, DollarSign, Clock, CheckCircle, Circle, MoreHorizontal, Bell, Paperclip, MessageSquare, X, Edit3, Trash2, Save, Filter, SortAsc, Eye, Phone, Mail, MapPin, Hash, FileText, Upload, Download, Moon, Sun, Grid3X3, List, Kanban, BarChart3, Users, Tag, Flag, Zap, ChevronDown, ChevronRight, Settings, Home, Folder, Target, TrendingUp, Activity, AlertCircle, CheckSquare, PlayCircle, PauseCircle, RotateCcw, Archive, Copy, Share2, ExternalLink, Bookmark, Heart, ThumbsUp, Clock4, Calendar as CalendarIcon, Timer, Gauge } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Filter, Calendar, User, DollarSign, FileText, Eye, Edit, Trash2, Clock, CheckCircle, AlertCircle, XCircle, MoreHorizontal, Grid, List, Moon, Sun, ChevronDown, ChevronRight, Paperclip, MessageSquare, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 interface PhotographyTaskManagerProps {
   user: any;
