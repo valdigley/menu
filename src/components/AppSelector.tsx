@@ -312,9 +312,9 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       icon: 'CheckSquare',
       color: 'orange',
       backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://obrigacoes.exemplo.com',
+      url: 'internal:obrigacoes',
       hasAccess: hasBasicSystemAccess('obrigacoes'),
-      isActive: false
+      isActive: true
     },
     {
       id: 'tarefas',
@@ -406,6 +406,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     if (app.id === 'tarefas') {
       setShowTaskList(true);
+      return;
+    }
+    
+    if (app.id === 'obrigacoes') {
+      setShowConfiguration(true);
       return;
     }
     
