@@ -72,11 +72,11 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
   // Carregar tipos de eventos padrão se não fornecidos
   const defaultEventTypes = [
-    { id: 'casamento', name: 'Casamento', color: '#ec4899', basePrice: 3000 },
-    { id: 'aniversario', name: 'Aniversário', color: '#f59e0b', basePrice: 800 },
-    { id: 'ensaio', name: 'Ensaio Fotográfico', color: '#3b82f6', basePrice: 500 },
-    { id: 'formatura', name: 'Formatura', color: '#8b5cf6', basePrice: 1200 },
-    { id: 'corporativo', name: 'Corporativo', color: '#6b7280', basePrice: 600 }
+    { id: 'casamento', name: 'Casamento', color: '#ec4899', basePrice: 3000, is_active: true },
+    { id: 'aniversario', name: 'Aniversário', color: '#f59e0b', basePrice: 800, is_active: true },
+    { id: 'ensaio', name: 'Ensaio Fotográfico', color: '#3b82f6', basePrice: 500, is_active: true },
+    { id: 'formatura', name: 'Formatura', color: '#8b5cf6', basePrice: 1200, is_active: true },
+    { id: 'corporativo', name: 'Corporativo', color: '#6b7280', basePrice: 600, is_active: true }
   ];
 
   const availableEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
