@@ -156,9 +156,6 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     { name: 'Amarelo', value: 'yellow', hex: '#eab308' }
   ];
 
-  const wallpapers = [
-  ];
-
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -286,16 +283,6 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       }
     }
   }, [onSettingsChange]);
-
-  const updateSettingOld = (category: string, key: string, value: any) => {
-    const newSettings = {
-      ...prev,
-      [category]: {
-        ...prev[category as keyof typeof prev],
-        [key]: value
-      }
-    };
-  };
 
   const updateButton = (buttonId: string, key: string, value: any) => {
     const newSettings = {
@@ -465,27 +452,6 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     
     updateSetting('appearance', settingKey, null);
   };
-
-  const ToggleSwitch = ({ enabled, onChange, label, description }: any) => (
-    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-      <div>
-        <h3 className="font-medium text-gray-900 dark:text-white">{label}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
-      </div>
-      <button
-        onClick={() => onChange(!enabled)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-        }`}
-      >
-        <motion.span
-          animate={{ x: enabled ? 24 : 4 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className="inline-block h-4 w-4 transform rounded-full bg-white shadow-lg"
-        />
-      </button>
-    </div>
-  );
 
   const renderAppearanceSettings = () => (
     <div className="space-y-8">
@@ -985,95 +951,10 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     </div>
   );
 
-  const renderGeneralSettings = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
-            <Settings className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Configurações Gerais
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Informações básicas do sistema
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Nome do Sistema
-            </label>
-            <input
-              type="text"
-              value={settings.general.siteName}
-              onChange={(e) => updateSetting('general', 'siteName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Descrição
-            </label>
-            <textarea
-              value={settings.general.siteDescription}
-              onChange={(e) => updateSetting('general', 'siteDescription', e.target.value)}
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Idioma
-              </label>
-              <select
-                value={settings.general.language}
-                onChange={(e) => updateSetting('general', 'language', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              >
-                <option value="pt-BR">Português (Brasil)</option>
-                <option value="en-US">English (US)</option>
-                <option value="es-ES">Español</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Fuso Horário
-              </label>
-              <select
-                value={settings.general.timezone}
-                onChange={(e) => updateSetting('general', 'timezone', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              >
-                <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
-                <option value="America/New_York">New York (GMT-5)</option>
-                <option value="Europe/London">London (GMT+0)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'appearance':
         return renderAppearanceSettings();
-      case 'events':
-        return renderEventTypesSettings();
       case 'events':
         return renderEventTypesSettings();
       default:
