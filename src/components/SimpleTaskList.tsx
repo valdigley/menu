@@ -20,7 +20,6 @@ interface Task {
 const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     date: '',
@@ -53,7 +52,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
         .from('tasks')
         .select('*')
         .eq('user_id', user.id)
-        .order('due_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setTasks(data || []);
@@ -65,7 +64,10 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
   };
 
   const addTask = async () => {
-    if (!supabase || !newTask.title.trim() || !newTask.date) return;
+    if (!supabase || !newTask.title.trim()) return;
+
+    // Se não tem data, usar hoje
+    const taskDate = newTask.date || new Date().toISOString().split('T')[0];
 
     try {
       const { data, error } = await supabase
@@ -76,7 +78,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
           description: `Tarefa: ${newTask.service_type}`,
           status: 'pending',
           priority: 'medium',
-          due_date: new Date(newTask.date).toISOString(),
+          due_date: new Date(taskDate).toISOString(),
           category_id: null
         }])
         .select()
@@ -87,20 +89,19 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
       const taskForList: Task = {
         id: data.id,
         title: newTask.title.trim(),
-        due_date: newTask.date,
+        due_date: taskDate,
         service_type: newTask.service_type,
         completed: false,
         created_at: data.created_at
       };
 
-      setTasks(prev => [...prev, taskForList].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
+      setTasks(prev => [taskForList, ...prev]);
       
       setNewTask({
         title: '',
-        date: '',
+        date: taskDate, // Manter a data para próxima tarefa
         service_type: 'Ensaio Fotográfico'
       });
-      setShowAddForm(false);
     } catch (error) {
       console.error('Erro ao adicionar tarefa:', error);
     }
@@ -142,6 +143,13 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
       setTasks(prev => prev.filter(task => task.id !== taskId));
     } catch (error) {
       console.error('Erro ao excluir tarefa:', error);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      addTask();
     }
   };
 
@@ -201,76 +209,43 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
                 Tarefas
               </h1>
             </div>
-            
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-            >
-              <Plus className="h-4 w-4" />
-              Nova Tarefa
-            </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Formulário de adicionar tarefa */}
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={newTask.title}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Nome da tarefa..."
-                  className="w-full bg-transparent border-none text-lg placeholder-gray-500 focus:outline-none"
-                  autoFocus
-                />
-                
-                <div className="flex gap-4">
-                  <input
-                    type="date"
-                    value={newTask.date}
-                    onChange={(e) => setNewTask(prev => ({ ...prev, date: e.target.value }))}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                  />
-                  
-                  <select
-                    value={newTask.service_type}
-                    onChange={(e) => setNewTask(prev => ({ ...prev, service_type: e.target.value }))}
-                    className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                  >
-                    {serviceTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={addTask}
-                    disabled={!newTask.title.trim() || !newTask.date}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Adicionar
-                  </button>
-                  <button
-                    onClick={() => setShowAddForm(false)}
-                    className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Campo de entrada sempre visível */}
+        <div className="mb-8 bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="flex gap-3 items-center">
+            <input
+              type="text"
+              value={newTask.title}
+              onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+              onKeyPress={handleKeyPress}
+              placeholder="Digite uma nova tarefa e pressione Enter..."
+              className="flex-1 bg-transparent border-none text-white placeholder-gray-500 focus:outline-none"
+              autoFocus
+            />
+            
+            <input
+              type="date"
+              value={newTask.date}
+              onChange={(e) => setNewTask(prev => ({ ...prev, date: e.target.value }))}
+              className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500 transition-colors text-white"
+            />
+            
+            <select
+              value={newTask.service_type}
+              onChange={(e) => setNewTask(prev => ({ ...prev, service_type: e.target.value }))}
+              className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500 transition-colors text-white"
+            >
+              {serviceTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         {/* Lista de tarefas */}
         {loading ? (
