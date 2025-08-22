@@ -392,6 +392,21 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           return;
         }
         
+        if (app.id === 'obrigacoes') {
+          // Importar e mostrar o sistema de tarefas fotográficas
+          import('./PhotographyTaskManager').then(({ default: PhotographyTaskManager }) => {
+            // Criar um componente wrapper para renderizar o PhotographyTaskManager
+            const taskManagerElement = document.createElement('div');
+            taskManagerElement.id = 'photography-task-manager';
+            document.body.appendChild(taskManagerElement);
+            
+            // Renderizar o componente (isso seria feito com React.render em um setup real)
+            // Por enquanto, vamos usar uma abordagem mais simples
+            window.location.hash = '#obrigacoes';
+          });
+          return;
+        }
+        
         window.open(app.url, '_blank');
       });
       return;
@@ -410,6 +425,27 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     window.open(app.url, '_blank');
   };
+
+  // Verificar se deve mostrar o sistema de tarefas
+  if (window.location.hash === '#obrigacoes') {
+    const PhotographyTaskManager = React.lazy(() => import('./PhotographyTaskManager'));
+    return (
+      <React.Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      }>
+        <PhotographyTaskManager
+          user={user}
+          supabase={supabase}
+          onBack={() => {
+            window.location.hash = '';
+            window.location.reload();
+          }}
+        />
+      </React.Suspense>
+    );
+  }
 
   if (loading) {
     return (
