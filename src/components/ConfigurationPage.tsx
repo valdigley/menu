@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Settings, Palette, Upload, Eye, Trash2, Plus, Monitor, Smartphone, Image, Zap, Grid3X3, Sparkles, X, Check } from 'lucide-react';
+import { ArrowLeft, Save, Settings, Palette, Upload, Eye, Trash2, Plus, Monitor, Smartphone, Image, Zap, Grid3X3, Sparkles, X, Check, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIconComponent } from '../utils/icons';
 
@@ -122,6 +122,13 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       description: 'Personalize a interface visual',
       color: 'from-purple-500 to-pink-500'
     },
+    { 
+      id: 'events', 
+      name: 'Tipos de Eventos', 
+      icon: Calendar,
+      description: 'Configure tipos e prazos',
+      color: 'from-green-500 to-emerald-500'
+    }
     { 
       id: 'events', 
       name: 'Tipos de Eventos', 
@@ -1072,6 +1079,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     switch (activeTab) {
       case 'appearance':
         return renderAppearanceSettings();
+      case 'events':
+        return renderEventTypesSettings();
       case 'events':
         return renderEventTypesSettings();
       default:
