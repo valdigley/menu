@@ -409,12 +409,12 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
-    if (app.id === 'obrigacoes') {
+    if (app.url === 'internal:configuracao') {
       setShowConfiguration(true);
       return;
     }
     
-    if (app.url === 'internal:configuracao') {
+    if (app.url === 'internal:obrigacoes') {
       setShowConfiguration(true);
       return;
     }
