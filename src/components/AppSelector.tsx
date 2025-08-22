@@ -198,15 +198,16 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         .select('has_access, expires_at')
         .eq('user_id', profile.id)
         .eq('system_id', systemId)
-        .single();
+        .maybeSingle();
       
       if (error) {
-        // Se não existe registro, por padrão tem acesso (para compatibilidade)
-        if (error.code === 'PGRST116') {
-          return true;
-        }
         console.warn('Erro ao verificar acesso específico:', error);
         return true; // Fallback para permitir acesso
+      }
+      
+      // Se não existe registro (data é null), por padrão tem acesso (para compatibilidade)
+      if (!data) {
+        return true;
       }
       
       // Verificar se o acesso não expirou
