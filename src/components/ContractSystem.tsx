@@ -131,17 +131,34 @@ const ContractSystem: React.FC<ContractSystemProps> = ({ user, supabase, onBack 
       // Carregar pacotes
       const { data: packagesData, error: packagesError } = await supabase
         .from('packages')
-        .select('*, event_types(name)')
+        .select('*')
         .eq('is_active', true)
         .order('price');
 
       if (packagesError) {
         console.warn('Erro ao carregar pacotes:', packagesError);
-        setPackages([
-          { id: '1', name: 'Básico', description: 'Pacote básico', price: 1500, features: ['Fotos digitais', 'Edição básica'], is_active: true },
-          { id: '2', name: 'Premium', description: 'Pacote premium', price: 2500, features: ['Fotos digitais', 'Edição avançada', 'Álbum'], is_active: true },
-          { id: '3', name: 'Completo', description: 'Pacote completo', price: 3500, features: ['Fotos digitais', 'Edição avançada', 'Álbum', 'Vídeo'], is_active: true }
-        ]);
+        // Criar pacotes padrão baseados nos tipos de eventos
+        const defaultPackages: Package[] = [];
+        eventTypes.forEach(eventType => {
+          if (eventType.name === 'Casamento') {
+            defaultPackages.push(
+              { id: `${eventType.id}-1`, name: 'Básico', description: 'Pacote básico para casamento', price: 2500, features: ['Cobertura de 6 horas', '200 fotos editadas'], is_active: true, event_type_id: eventType.id },
+              { id: `${eventType.id}-2`, name: 'Premium', description: 'Pacote premium para casamento', price: 4000, features: ['Cobertura de 8 horas', '400 fotos editadas', 'Álbum'], is_active: true, event_type_id: eventType.id },
+              { id: `${eventType.id}-3`, name: 'Completo', description: 'Pacote completo para casamento', price: 6000, features: ['Cobertura completa', '600+ fotos', 'Álbum premium', 'Vídeo'], is_active: true, event_type_id: eventType.id }
+            );
+          } else if (eventType.name === 'Aniversário') {
+            defaultPackages.push(
+              { id: `${eventType.id}-1`, name: 'Básico', description: 'Pacote básico para aniversário', price: 800, features: ['Cobertura de 3 horas', '100 fotos editadas'], is_active: true, event_type_id: eventType.id },
+              { id: `${eventType.id}-2`, name: 'Premium', description: 'Pacote premium para aniversário', price: 1200, features: ['Cobertura de 4 horas', '200 fotos editadas', 'Álbum'], is_active: true, event_type_id: eventType.id }
+            );
+          } else if (eventType.name === 'Ensaio Fotográfico') {
+            defaultPackages.push(
+              { id: `${eventType.id}-1`, name: 'Básico', description: 'Ensaio fotográfico básico', price: 400, features: ['1 hora de sessão', '30 fotos editadas'], is_active: true, event_type_id: eventType.id },
+              { id: `${eventType.id}-2`, name: 'Premium', description: 'Ensaio fotográfico premium', price: 600, features: ['2 horas de sessão', '50 fotos editadas', '10 fotos impressas'], is_active: true, event_type_id: eventType.id }
+            );
+          }
+        });
+        setPackages(defaultPackages);
       } else {
         setPackages(packagesData || []);
       }
@@ -610,9 +627,9 @@ const ContractForm: React.FC<{
     setFormData({ ...formData, [field]: value });
   };
 
-  const filteredPackages = formData.event_type_id ? packages.filter(pkg => 
-    !formData.event_type_id || pkg.event_type_id === formData.event_type_id
-  ) : [];
+  const filteredPackages = formData.event_type_id ? 
+    packages.filter(pkg => pkg.event_type_id === formData.event_type_id) : 
+    [];
 
   const calculateFinalPrice = () => {
     const basePrice = formData.package_price || 0;
@@ -795,14 +812,18 @@ const ContractForm: React.FC<{
                   <select
                     value={formData.event_type_id || ''}
                     onChange={(e) => {
+                      console.log('Selecionando tipo de evento:', e.target.value);
                       updateField('event_type_id', e.target.value);
                       const eventType = eventTypes.find(et => et.id === e.target.value);
                       if (eventType) {
+                        console.log('Tipo de evento encontrado:', eventType);
                         updateField('tipo_evento', eventType.name);
                         // Limpar pacote selecionado quando mudar tipo de evento
                         updateField('package_id', '');
                         updateField('package_price', 0);
                         updateField('final_price', 0);
+                      } else {
+                        console.log('Tipo de evento não encontrado para ID:', e.target.value);
                       }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -931,7 +952,10 @@ const ContractForm: React.FC<{
                   <select
                     value={formData.package_id || ''}
                     onChange={(e) => {
+                      console.log('Selecionando pacote:', e.target.value);
                       const selectedPackage = packages.find(p => p.id === e.target.value);
+                      console.log('Pacote encontrado:', selectedPackage);
+                      console.log('Pacotes filtrados disponíveis:', filteredPackages);
                       updateField('package_id', e.target.value);
                       if (selectedPackage) {
                         updateField('package_price', selectedPackage.price);
@@ -952,7 +976,7 @@ const ContractForm: React.FC<{
                   </select>
                   {formData.event_type_id && filteredPackages.length === 0 && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Nenhum pacote disponível para este tipo de evento
+                      Nenhum pacote disponível para este tipo de evento. Verifique se os pacotes foram criados no banco de dados.
                     </p>
                   )}
                 </div>
