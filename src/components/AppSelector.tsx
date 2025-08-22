@@ -381,8 +381,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     // Verificar se é o sistema de contratos para usar SSO
     if (app.id === 'contrato' && user) {
-      // Abrir integração de contratos
-      setShowContractIntegration(true);
+      // Abrir sistema de contratos diretamente com SSO
+      SSOManager.openSystemWithSSO(app.url, user);
       return;
     }
     
