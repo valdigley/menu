@@ -177,6 +177,72 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
     }
   };
 
+  const onDragStart = (start: any) => {
+    setDraggedTask(start.draggableId);
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    setDraggedTask(null);
+    
+    const { destination, source, draggableId } = result;
+
+    // Se não há destino, cancelar
+    if (!destination) return;
+
+    // Se a posição não mudou, cancelar
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    // Encontrar a tarefa que foi movida
+    const task = tasks.find(t => t.id === draggableId);
+    if (!task) return;
+
+    // Mapear droppableId para status
+    const statusMap: { [key: string]: string } = {
+      'pending': 'pending',
+      'in_progress': 'in_progress', 
+      'review': 'review',
+      'completed': 'completed'
+    };
+
+    const newStatus = statusMap[destination.droppableId];
+    if (!newStatus) return;
+
+    // Atualizar localmente primeiro para feedback imediato
+    const updatedTasks = tasks.map(t => 
+      t.id === draggableId ? { ...t, status: newStatus } : t
+    );
+    setTasks(updatedTasks);
+
+    // Atualizar no banco de dados
+    try {
+      if (supabase) {
+        const { error } = await supabase
+          .from('photography_tasks')
+          .update({ 
+            status: newStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', draggableId);
+
+        if (error) {
+          console.error('Erro ao atualizar status:', error);
+          // Reverter mudança local em caso de erro
+          setTasks(tasks);
+          alert('Erro ao atualizar status da tarefa');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+      // Reverter mudança local em caso de erro
+      setTasks(tasks);
+    }
+  };
+
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     if (!supabase) return;
 
