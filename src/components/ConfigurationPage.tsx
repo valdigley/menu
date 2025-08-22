@@ -129,13 +129,6 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       description: 'Configure tipos e prazos',
       color: 'from-green-500 to-emerald-500'
     }
-    { 
-      id: 'events', 
-      name: 'Tipos de Eventos', 
-      icon: Calendar,
-      description: 'Configure tipos e prazos',
-      color: 'from-green-500 to-emerald-500'
-    }
   ];
 
   const availableIcons = [
