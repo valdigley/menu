@@ -386,6 +386,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
+    if (app.url === 'internal:configuracao') {
+      setShowConfiguration(true);
+      return;
+    }
+    
     // Verificar se é o sistema de contratos para usar SSO
     if (app.id === 'contrato' && user) {
       // Abrir sistema de contratos diretamente com SSO

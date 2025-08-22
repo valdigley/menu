@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Settings, Palette, Upload, Eye, Trash2, Plus, Monitor, Smartphone, Image, Zap, Grid3X3, Sparkles, X, Check, Calendar } from 'lucide-react';
+import { ArrowLeft, Save, Settings, Palette, Upload, Eye, Trash2, Plus, Monitor, Smartphone, Image, Zap, Grid3X3, Sparkles, X, Check, Calendar, Users, DollarSign, FileText, Package, CreditCard, Building, MapPin, Phone, Mail, Globe, Camera, Clock, Star, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIconComponent } from '../utils/icons';
 
@@ -11,30 +11,20 @@ interface ConfigurationPageProps {
 }
 
 const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, onBack, onSettingsChange }) => {
-  const [activeTab, setActiveTab] = useState('appearance');
+  const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState({
     general: {
-      siteName: 'Sistema de Gestão',
-      siteDescription: 'Plataforma completa de gestão',
+      siteName: 'Sistema de Gestão Fotográfica',
+      siteDescription: 'Plataforma completa de gestão para fotógrafos',
       language: 'pt-BR',
-      timezone: 'America/Sao_Paulo'
-    },
-    users: {
-      allowRegistration: true,
-      requireEmailVerification: false,
-      defaultRole: 'user',
-      maxUsers: 100
-    },
-    database: {
-      backupFrequency: 'daily',
-      retentionDays: 30,
-      autoOptimize: true
-    },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: 30,
-      passwordMinLength: 8,
-      requireStrongPassword: true
+      timezone: 'America/Sao_Paulo',
+      currency: 'BRL',
+      dateFormat: 'dd/MM/yyyy',
+      businessName: '',
+      businessPhone: '',
+      businessEmail: '',
+      businessAddress: '',
+      businessWebsite: ''
     },
     appearance: {
       theme: 'light',
@@ -54,7 +44,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           icon: 'Image',
           color: 'green',
           backgroundImage: 'https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=800',
-          url: 'https://triagem.exemplo.com'
+          url: 'https://triagem.exemplo.com',
+          isActive: true
         },
         {
           id: 'grana',
@@ -71,8 +62,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           icon: 'FileText',
           color: 'blue',
           backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
-          url: 'https://contratos.exemplo.com',
-          isActive: false
+          url: 'internal:contratos',
+          isActive: true
         },
         {
           id: 'automacao',
@@ -89,32 +80,168 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           icon: 'CheckSquare',
           color: 'orange',
           backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-          url: 'https://obrigacoes.exemplo.com',
+          url: 'internal:obrigacoes',
           isActive: true
         }
       ]
     },
     eventTypes: {
       types: [
-        { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
-        { id: 'casamento', name: 'Casamento', days: 30, color: '#ec4899' },
-        { id: 'aniversario', name: 'Aniversário', days: 14, color: '#f59e0b' },
-        { id: 'formatura', name: 'Formatura', days: 21, color: '#8b5cf6' },
-        { id: 'corporativo', name: 'Corporativo', days: 10, color: '#6b7280' },
-        { id: 'produto', name: 'Produto', days: 5, color: '#10b981' },
-        { id: 'evento', name: 'Evento', days: 14, color: '#f97316' },
-        { id: 'edicao', name: 'Edição de Fotos', days: 3, color: '#6366f1' },
-        { id: 'album', name: 'Entrega de Álbum', days: 45, color: '#ef4444' },
-        { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6' }
+        { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6', price: 400 },
+        { id: 'casamento', name: 'Casamento', days: 30, color: '#ec4899', price: 2500 },
+        { id: 'aniversario', name: 'Aniversário', days: 14, color: '#f59e0b', price: 800 },
+        { id: 'formatura', name: 'Formatura', days: 21, color: '#8b5cf6', price: 600 },
+        { id: 'corporativo', name: 'Corporativo', days: 10, color: '#6b7280', price: 500 },
+        { id: 'produto', name: 'Produto', days: 5, color: '#10b981', price: 300 },
+        { id: 'evento', name: 'Evento', days: 14, color: '#f97316', price: 700 },
+        { id: 'edicao', name: 'Edição de Fotos', days: 3, color: '#6366f1', price: 150 },
+        { id: 'album', name: 'Entrega de Álbum', days: 45, color: '#ef4444', price: 200 },
+        { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6', price: 0 }
       ]
+    },
+    packages: {
+      packages: [
+        {
+          id: 'basico-casamento',
+          eventTypeId: 'casamento',
+          name: 'Básico',
+          description: 'Pacote básico para casamento',
+          price: 2500,
+          features: ['Cobertura de 6 horas', '200 fotos editadas', 'Galeria online'],
+          isActive: true
+        },
+        {
+          id: 'premium-casamento',
+          eventTypeId: 'casamento',
+          name: 'Premium',
+          description: 'Pacote premium para casamento',
+          price: 4000,
+          features: ['Cobertura de 8 horas', '400 fotos editadas', 'Álbum 30x30', 'Galeria online', 'Pré-wedding'],
+          isActive: true
+        },
+        {
+          id: 'completo-casamento',
+          eventTypeId: 'casamento',
+          name: 'Completo',
+          description: 'Pacote completo para casamento',
+          price: 6000,
+          features: ['Cobertura completa', '600+ fotos editadas', 'Álbum premium', 'Galeria online', 'Pré-wedding', 'Making of', 'Vídeo highlights'],
+          isActive: true
+        },
+        {
+          id: 'basico-aniversario',
+          eventTypeId: 'aniversario',
+          name: 'Básico',
+          description: 'Pacote básico para aniversário',
+          price: 800,
+          features: ['Cobertura de 3 horas', '100 fotos editadas', 'Galeria online'],
+          isActive: true
+        },
+        {
+          id: 'premium-aniversario',
+          eventTypeId: 'aniversario',
+          name: 'Premium',
+          description: 'Pacote premium para aniversário',
+          price: 1200,
+          features: ['Cobertura de 4 horas', '200 fotos editadas', 'Álbum 20x20', 'Galeria online'],
+          isActive: true
+        }
+      ]
+    },
+    paymentMethods: {
+      methods: [
+        {
+          id: 'avista',
+          name: 'À Vista',
+          description: 'Pagamento à vista com desconto',
+          discountPercentage: 10,
+          installments: 1,
+          isActive: true
+        },
+        {
+          id: 'cartao',
+          name: 'Cartão de Crédito',
+          description: 'Parcelado no cartão de crédito',
+          discountPercentage: 0,
+          installments: 12,
+          isActive: true
+        },
+        {
+          id: 'pix',
+          name: 'PIX',
+          description: 'Pagamento via PIX',
+          discountPercentage: 5,
+          installments: 1,
+          isActive: true
+        },
+        {
+          id: 'transferencia',
+          name: 'Transferência',
+          description: 'Transferência bancária',
+          discountPercentage: 5,
+          installments: 1,
+          isActive: true
+        },
+        {
+          id: 'dinheiro',
+          name: 'Dinheiro',
+          description: 'Pagamento em dinheiro',
+          discountPercentage: 10,
+          installments: 1,
+          isActive: true
+        }
+      ]
+    },
+    business: {
+      name: '',
+      owner: '',
+      document: '',
+      phone: '',
+      email: '',
+      website: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      bankAccount: '',
+      pixKey: '',
+      socialMedia: {
+        instagram: '',
+        facebook: '',
+        whatsapp: ''
+      }
+    },
+    notifications: {
+      emailNotifications: true,
+      smsNotifications: false,
+      pushNotifications: true,
+      contractReminders: true,
+      paymentReminders: true,
+      eventReminders: true,
+      reminderDays: 7
     }
   });
+  
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingMain, setUploadingMain] = useState(false);
   const [uploadingLock, setUploadingLock] = useState(false);
 
   const tabs = [
+    { 
+      id: 'general', 
+      name: 'Geral', 
+      icon: Settings,
+      description: 'Configurações gerais do sistema',
+      color: 'from-blue-500 to-indigo-500'
+    },
+    { 
+      id: 'business', 
+      name: 'Empresa', 
+      icon: Building,
+      description: 'Dados da sua empresa',
+      color: 'from-green-500 to-emerald-500'
+    },
     { 
       id: 'appearance', 
       name: 'Aparência', 
@@ -127,7 +254,28 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       name: 'Tipos de Eventos', 
       icon: Calendar,
       description: 'Configure tipos e prazos',
-      color: 'from-green-500 to-emerald-500'
+      color: 'from-orange-500 to-red-500'
+    },
+    { 
+      id: 'packages', 
+      name: 'Pacotes', 
+      icon: Package,
+      description: 'Gerencie pacotes de serviços',
+      color: 'from-cyan-500 to-blue-500'
+    },
+    { 
+      id: 'payments', 
+      name: 'Pagamentos', 
+      icon: CreditCard,
+      description: 'Métodos de pagamento',
+      color: 'from-yellow-500 to-orange-500'
+    },
+    { 
+      id: 'notifications', 
+      name: 'Notificações', 
+      icon: Bell,
+      description: 'Configurar alertas e lembretes',
+      color: 'from-red-500 to-pink-500'
     }
   ];
 
@@ -160,6 +308,56 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Salvar no Supabase se disponível
+      if (supabase) {
+        try {
+          // Salvar tipos de eventos
+          for (const eventType of settings.eventTypes.types) {
+            await supabase
+              .from('event_types')
+              .upsert({
+                id: eventType.id,
+                name: eventType.name,
+                is_active: true
+              }, { onConflict: 'name' });
+          }
+
+          // Salvar pacotes
+          for (const pkg of settings.packages.packages) {
+            const eventType = settings.eventTypes.types.find(et => et.id === pkg.eventTypeId);
+            if (eventType) {
+              await supabase
+                .from('packages')
+                .upsert({
+                  id: pkg.id,
+                  name: pkg.name,
+                  description: pkg.description,
+                  price: pkg.price,
+                  features: pkg.features,
+                  is_active: pkg.isActive,
+                  event_type_id: eventType.id
+                }, { onConflict: 'id' });
+            }
+          }
+
+          // Salvar métodos de pagamento
+          for (const method of settings.paymentMethods.methods) {
+            await supabase
+              .from('payment_methods')
+              .upsert({
+                id: method.id,
+                name: method.name,
+                description: method.description,
+                discount_percentage: method.discountPercentage,
+                installments: method.installments,
+                is_active: method.isActive
+              }, { onConflict: 'id' });
+          }
+        } catch (error) {
+          console.warn('Erro ao salvar no Supabase:', error);
+        }
+      }
       
       // Notificar mudanças para o componente pai
       if (onSettingsChange) {
@@ -207,51 +405,6 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     }
   };
 
-  const updateEventType = (typeId: string, key: string, value: any) => {
-    const newSettings = {
-      ...settings,
-      eventTypes: {
-        ...settings.eventTypes,
-        types: settings.eventTypes.types.map(type => 
-          type.id === typeId ? { ...type, [key]: value } : type
-        )
-      }
-    };
-    
-    updateSettingsObject(newSettings);
-  };
-
-  const addEventType = () => {
-    const newType = {
-      id: `custom_${Date.now()}`,
-      name: 'Novo Tipo',
-      days: 7,
-      color: '#3b82f6'
-    };
-
-    const newSettings = {
-      ...settings,
-      eventTypes: {
-        ...settings.eventTypes,
-        types: [...settings.eventTypes.types, newType]
-      }
-    };
-    
-    updateSettingsObject(newSettings);
-  };
-
-  const removeEventType = (typeId: string) => {
-    const newSettings = {
-      ...settings,
-      eventTypes: {
-        ...settings.eventTypes,
-        types: settings.eventTypes.types.filter(type => type.id !== typeId)
-      }
-    };
-    
-    updateSettingsObject(newSettings);
-  };
-
   // Carregar configurações salvas ao inicializar
   useEffect(() => {
     const savedSettings = localStorage.getItem('systemSettings');
@@ -262,6 +415,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
         const mergedSettings = {
           ...settings,
           ...parsedSettings,
+          general: { ...settings.general, ...parsedSettings.general },
+          business: { ...settings.business, ...parsedSettings.business },
           appearance: {
             ...settings.appearance,
             ...parsedSettings.appearance,
@@ -270,6 +425,18 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           eventTypes: {
             ...settings.eventTypes,
             ...parsedSettings.eventTypes
+          },
+          packages: {
+            ...settings.packages,
+            ...parsedSettings.packages
+          },
+          paymentMethods: {
+            ...settings.paymentMethods,
+            ...parsedSettings.paymentMethods
+          },
+          notifications: {
+            ...settings.notifications,
+            ...parsedSettings.notifications
           }
         };
         setSettings(mergedSettings);
@@ -284,174 +451,349 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     }
   }, [onSettingsChange]);
 
-  const updateButton = (buttonId: string, key: string, value: any) => {
-    const newSettings = {
-      ...settings,
-      appearance: {
-        ...settings.appearance,
-        buttons: settings.appearance.buttons.map(btn => 
-          btn.id === buttonId ? { ...btn, [key]: value } : btn
-        )
-      }
-    };
-    
-    updateSettingsObject(newSettings);
-  };
+  const renderGeneralSettings = () => (
+    <div className="space-y-8">
+      {/* Configurações Gerais */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
+            <Settings className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Configurações Gerais
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Configurações básicas do sistema
+            </p>
+          </div>
+        </div>
 
-  const addButton = () => {
-    const newButton = {
-      id: `custom_${Date.now()}`,
-      name: 'Novo Sistema',
-      icon: 'Zap',
-      color: 'blue',
-      backgroundImage: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://exemplo.com'
-    };
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nome do Sistema
+            </label>
+            <input
+              type="text"
+              value={settings.general.siteName}
+              onChange={(e) => updateSetting('general', 'siteName', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-    const newSettings = {
-      ...settings,
-      appearance: {
-        ...settings.appearance,
-        buttons: [...settings.appearance.buttons, newButton]
-      }
-    };
-    
-    updateSettingsObject(newSettings);
-  };
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Idioma
+            </label>
+            <select
+              value={settings.general.language}
+              onChange={(e) => updateSetting('general', 'language', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            >
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="en-US">English (US)</option>
+              <option value="es-ES">Español</option>
+            </select>
+          </div>
 
-  const removeButton = (buttonId: string) => {
-    console.log('Removendo botão:', buttonId);
-    const newSettings = {
-      ...settings,
-      appearance: {
-        ...settings.appearance,
-        buttons: settings.appearance.buttons.filter(btn => btn.id !== buttonId)
-      }
-    };
-    
-    updateSettingsObject(newSettings);
-  };
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Fuso Horário
+            </label>
+            <select
+              value={settings.general.timezone}
+              onChange={(e) => updateSetting('general', 'timezone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            >
+              <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
+              <option value="America/New_York">New York (GMT-5)</option>
+              <option value="Europe/London">London (GMT+0)</option>
+            </select>
+          </div>
 
-  const getColorGradient = (color: string) => {
-    const gradients = {
-      blue: 'from-blue-500 to-indigo-600',
-      green: 'from-green-500 to-emerald-600',
-      purple: 'from-purple-500 to-pink-600',
-      pink: 'from-pink-500 to-rose-600',
-      orange: 'from-orange-500 to-amber-600',
-      red: 'from-red-500 to-pink-600',
-      gray: 'from-gray-500 to-slate-600',
-      yellow: 'from-yellow-500 to-orange-600'
-    };
-    return gradients[color as keyof typeof gradients] || 'from-blue-500 to-indigo-600';
-  };
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Moeda
+            </label>
+            <select
+              value={settings.general.currency}
+              onChange={(e) => updateSetting('general', 'currency', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            >
+              <option value="BRL">Real (R$)</option>
+              <option value="USD">Dólar ($)</option>
+              <option value="EUR">Euro (€)</option>
+            </select>
+          </div>
 
-  const uploadImage = async (file: File, type: 'main' | 'lock') => {
-    if (!supabase) {
-      alert('Supabase não configurado');
-      return;
-    }
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Descrição do Sistema
+            </label>
+            <textarea
+              value={settings.general.siteDescription}
+              onChange={(e) => updateSetting('general', 'siteDescription', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
 
-    const setUploading = type === 'main' ? setUploadingMain : setUploadingLock;
-    setUploading(true);
+  const renderBusinessSettings = () => (
+    <div className="space-y-8">
+      {/* Dados da Empresa */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+            <Building className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Dados da Empresa
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Informações do seu negócio
+            </p>
+          </div>
+        </div>
 
-    try {
-      // Validar tipo de arquivo
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Por favor, selecione apenas arquivos de imagem');
-      }
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nome da Empresa
+            </label>
+            <input
+              type="text"
+              value={settings.business.name}
+              onChange={(e) => updateSetting('business', 'name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      // Validar tamanho (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('Imagem muito grande. Máximo 5MB');
-      }
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Proprietário
+            </label>
+            <input
+              type="text"
+              value={settings.business.owner}
+              onChange={(e) => updateSetting('business', 'owner', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      // Gerar nome único para o arquivo
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${type}-wallpaper-${Date.now()}.${fileExt}`;
-      const filePath = `wallpapers/${fileName}`;
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              CNPJ/CPF
+            </label>
+            <input
+              type="text"
+              value={settings.business.document}
+              onChange={(e) => updateSetting('business', 'document', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      // Upload para o bucket "Uteis"
-      const { data, error } = await supabase.storage
-        .from('Uteis')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Telefone
+            </label>
+            <input
+              type="text"
+              value={settings.business.phone}
+              onChange={(e) => updateSetting('business', 'phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      if (error) {
-        throw error;
-      }
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              value={settings.business.email}
+              onChange={(e) => updateSetting('business', 'email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('Uteis')
-        .getPublicUrl(filePath);
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Website
+            </label>
+            <input
+              type="url"
+              value={settings.business.website}
+              onChange={(e) => updateSetting('business', 'website', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      // Atualizar estado
-      const settingKey = type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper';
-      updateSetting('appearance', settingKey, publicUrl);
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Endereço
+            </label>
+            <input
+              type="text"
+              value={settings.business.address}
+              onChange={(e) => updateSetting('business', 'address', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-      console.log('Upload realizado com sucesso:', publicUrl);
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Cidade
+            </label>
+            <input
+              type="text"
+              value={settings.business.city}
+              onChange={(e) => updateSetting('business', 'city', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-    } catch (error: any) {
-      console.error('Erro no upload:', error);
-      
-      // Melhor tratamento de erros específicos
-      let errorMessage = 'Erro ao fazer upload da imagem';
-      
-      if (error.message?.includes('row-level security policy')) {
-        errorMessage = 'Erro de permissão: O bucket "Uteis" precisa de políticas RLS configuradas para permitir uploads. Configure as políticas no painel do Supabase.';
-      } else if (error.message?.includes('Bucket not found')) {
-        errorMessage = 'Bucket "Uteis" não encontrado. Verifique se o bucket existe no Supabase Storage.';
-      } else if (error.message?.includes('Unauthorized')) {
-        errorMessage = 'Não autorizado: Verifique as políticas de segurança do bucket "Uteis" no Supabase.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      alert(errorMessage);
-      console.error('Detalhes do erro:', {
-        message: error.message,
-        status: error.status,
-        details: error
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Estado
+            </label>
+            <input
+              type="text"
+              value={settings.business.state}
+              onChange={(e) => updateSetting('business', 'state', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+        </div>
+      </motion.div>
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, type: 'main' | 'lock') => {
-    const file = event.target.files?.[0];
-    if (file) {
-      uploadImage(file, type);
-    }
-    // Limpar input para permitir selecionar o mesmo arquivo novamente
-    event.target.value = '';
-  };
+      {/* Dados Bancários */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg">
+            <CreditCard className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Dados Bancários
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Informações para recebimento
+            </p>
+          </div>
+        </div>
 
-  const removeWallpaper = async (type: 'main' | 'lock') => {
-    const settingKey = type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper';
-    const currentUrl = settings.appearance[settingKey];
-    
-    if (currentUrl && supabase) {
-      try {
-        // Extrair caminho do arquivo da URL
-        const urlParts = currentUrl.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        const filePath = `wallpapers/${fileName}`;
-        
-        // Remover do storage
-        await supabase.storage
-          .from('Uteis')
-          .remove([filePath]);
-      } catch (error) {
-        console.error('Erro ao remover arquivo:', error);
-      }
-    }
-    
-    updateSetting('appearance', settingKey, null);
-  };
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Conta Bancária
+            </label>
+            <input
+              type="text"
+              value={settings.business.bankAccount}
+              onChange={(e) => updateSetting('business', 'bankAccount', e.target.value)}
+              placeholder="Banco, Agência, Conta"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Chave PIX
+            </label>
+            <input
+              type="text"
+              value={settings.business.pixKey}
+              onChange={(e) => updateSetting('business', 'pixKey', e.target.value)}
+              placeholder="CPF, CNPJ, Email ou Telefone"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Redes Sociais */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg">
+            <Globe className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Redes Sociais
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Links das suas redes sociais
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Instagram
+            </label>
+            <input
+              type="text"
+              value={settings.business.socialMedia.instagram}
+              onChange={(e) => updateSetting('business', 'socialMedia', { ...settings.business.socialMedia, instagram: e.target.value })}
+              placeholder="@seuinstagram"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Facebook
+            </label>
+            <input
+              type="text"
+              value={settings.business.socialMedia.facebook}
+              onChange={(e) => updateSetting('business', 'socialMedia', { ...settings.business.socialMedia, facebook: e.target.value })}
+              placeholder="facebook.com/seuperfil"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              WhatsApp Business
+            </label>
+            <input
+              type="text"
+              value={settings.business.socialMedia.whatsapp}
+              onChange={(e) => updateSetting('business', 'socialMedia', { ...settings.business.socialMedia, whatsapp: e.target.value })}
+              placeholder="(11) 99999-9999"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
 
   const renderAppearanceSettings = () => (
     <div className="space-y-8">
@@ -833,9 +1175,147 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     </div>
   );
 
+  // Implementar outras funções necessárias...
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, type: 'main' | 'lock') => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadImage(file, type);
+    }
+    event.target.value = '';
+  };
+
+  const uploadImage = async (file: File, type: 'main' | 'lock') => {
+    if (!supabase) {
+      alert('Supabase não configurado');
+      return;
+    }
+
+    const setUploading = type === 'main' ? setUploadingMain : setUploadingLock;
+    setUploading(true);
+
+    try {
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Por favor, selecione apenas arquivos de imagem');
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Imagem muito grande. Máximo 5MB');
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${type}-wallpaper-${Date.now()}.${fileExt}`;
+      const filePath = `wallpapers/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('Uteis')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('Uteis')
+        .getPublicUrl(filePath);
+
+      const settingKey = type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper';
+      updateSetting('appearance', settingKey, publicUrl);
+
+    } catch (error: any) {
+      console.error('Erro no upload:', error);
+      alert(error.message || 'Erro ao fazer upload da imagem');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeWallpaper = async (type: 'main' | 'lock') => {
+    const settingKey = type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper';
+    const currentUrl = settings.appearance[settingKey];
+    
+    if (currentUrl && supabase) {
+      try {
+        const urlParts = currentUrl.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        const filePath = `wallpapers/${fileName}`;
+        
+        await supabase.storage
+          .from('Uteis')
+          .remove([filePath]);
+      } catch (error) {
+        console.error('Erro ao remover arquivo:', error);
+      }
+    }
+    
+    updateSetting('appearance', settingKey, null);
+  };
+
+  const getColorGradient = (color: string) => {
+    const gradients = {
+      blue: 'from-blue-500 to-indigo-600',
+      green: 'from-green-500 to-emerald-600',
+      purple: 'from-purple-500 to-pink-600',
+      pink: 'from-pink-500 to-rose-600',
+      orange: 'from-orange-500 to-amber-600',
+      red: 'from-red-500 to-pink-600',
+      gray: 'from-gray-500 to-slate-600',
+      yellow: 'from-yellow-500 to-orange-600'
+    };
+    return gradients[color as keyof typeof gradients] || 'from-blue-500 to-indigo-600';
+  };
+
+  const updateButton = (buttonId: string, key: string, value: any) => {
+    const newSettings = {
+      ...settings,
+      appearance: {
+        ...settings.appearance,
+        buttons: settings.appearance.buttons.map(btn => 
+          btn.id === buttonId ? { ...btn, [key]: value } : btn
+        )
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  const addButton = () => {
+    const newButton = {
+      id: `custom_${Date.now()}`,
+      name: 'Novo Sistema',
+      icon: 'Zap',
+      color: 'blue',
+      backgroundImage: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800',
+      url: 'https://exemplo.com',
+      isActive: true
+    };
+
+    const newSettings = {
+      ...settings,
+      appearance: {
+        ...settings.appearance,
+        buttons: [...settings.appearance.buttons, newButton]
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  const removeButton = (buttonId: string) => {
+    const newSettings = {
+      ...settings,
+      appearance: {
+        ...settings.appearance,
+        buttons: settings.appearance.buttons.filter(btn => btn.id !== buttonId)
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  // Implementar renderização das outras abas...
   const renderEventTypesSettings = () => (
     <div className="space-y-8">
-      {/* Event Types Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -843,7 +1323,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+            <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
               <Calendar className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -859,7 +1339,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={addEventType}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors shadow-sm"
           >
             <Plus className="h-4 w-4" />
             Adicionar Tipo
@@ -894,7 +1374,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nome do Tipo
@@ -903,7 +1383,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
                     type="text"
                     value={eventType.name}
                     onChange={(e) => updateEventType(eventType.id, 'name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
                   />
                 </div>
 
@@ -917,7 +1397,21 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
                     max="365"
                     value={eventType.days}
                     onChange={(e) => updateEventType(eventType.id, 'days', parseInt(e.target.value) || 1)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Preço Base
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={eventType.price}
+                    onChange={(e) => updateEventType(eventType.id, 'price', parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
                   />
                 </div>
 
@@ -929,7 +1423,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
                     type="color"
                     value={eventType.color}
                     onChange={(e) => updateEventType(eventType.id, 'color', e.target.value)}
-                    className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -943,6 +1437,14 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
                     {eventType.days} {eventType.days === 1 ? 'dia' : 'dias'} após a data do evento
                   </span>
                 </div>
+                <div className="flex items-center justify-between text-sm mt-1">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Preço base sugerido:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    R$ {eventType.price.toFixed(2)}
+                  </span>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -951,14 +1453,70 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     </div>
   );
 
+  const addEventType = () => {
+    const newType = {
+      id: `custom_${Date.now()}`,
+      name: 'Novo Tipo',
+      days: 7,
+      color: '#3b82f6',
+      price: 500
+    };
+
+    const newSettings = {
+      ...settings,
+      eventTypes: {
+        ...settings.eventTypes,
+        types: [...settings.eventTypes.types, newType]
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  const removeEventType = (typeId: string) => {
+    const newSettings = {
+      ...settings,
+      eventTypes: {
+        ...settings.eventTypes,
+        types: settings.eventTypes.types.filter(type => type.id !== typeId)
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  const updateEventType = (typeId: string, key: string, value: any) => {
+    const newSettings = {
+      ...settings,
+      eventTypes: {
+        ...settings.eventTypes,
+        types: settings.eventTypes.types.map(type => 
+          type.id === typeId ? { ...type, [key]: value } : type
+        )
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'general':
+        return renderGeneralSettings();
+      case 'business':
+        return renderBusinessSettings();
       case 'appearance':
         return renderAppearanceSettings();
       case 'events':
         return renderEventTypesSettings();
+      case 'packages':
+        return <div>Pacotes em desenvolvimento...</div>;
+      case 'payments':
+        return <div>Métodos de pagamento em desenvolvimento...</div>;
+      case 'notifications':
+        return <div>Notificações em desenvolvimento...</div>;
       default:
-        return renderAppearanceSettings();
+        return renderGeneralSettings();
     }
   };
 
