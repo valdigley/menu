@@ -23,7 +23,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
   const [newTask, setNewTask] = useState({
     title: '',
     date: '',
-    service_type: 'Ensaio Fotográfico'
+    service_type: ''
   });
 
   const [eventTypes, setEventTypes] = useState<any[]>([]);
@@ -53,13 +53,36 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
         }
       } catch (error) {
         console.error('Erro ao carregar tipos de eventos:', error);
+        // Fallback para tipos padrão em caso de erro
+        setEventTypes([
+          { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
+          { id: 'casamento', name: 'Casamento', days: 30, color: '#ec4899' },
+          { id: 'aniversario', name: 'Aniversário', days: 14, color: '#f59e0b' },
+          { id: 'formatura', name: 'Formatura', days: 21, color: '#8b5cf6' },
+          { id: 'corporativo', name: 'Corporativo', days: 10, color: '#6b7280' },
+          { id: 'produto', name: 'Produto', days: 5, color: '#10b981' },
+          { id: 'evento', name: 'Evento', days: 14, color: '#f97316' },
+          { id: 'edicao', name: 'Edição de Fotos', days: 3, color: '#6366f1' },
+          { id: 'album', name: 'Entrega de Álbum', days: 45, color: '#ef4444' },
+          { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6' }
+        ]);
       }
+    }
+    
+    // Definir primeiro tipo como padrão se não há seleção
+    if (eventTypes.length > 0 && !newTask.service_type) {
+      setNewTask(prev => ({ ...prev, service_type: eventTypes[0].name }));
     }
   }, []);
 
   useEffect(() => {
     loadTasks();
-  }, []);
+    
+    // Definir primeiro tipo como padrão quando eventTypes carrega
+    if (eventTypes.length > 0 && !newTask.service_type) {
+      setNewTask(prev => ({ ...prev, service_type: eventTypes[0].name }));
+    }
+  }, [eventTypes]);
 
   const loadTasks = async () => {
     if (!supabase) return;
@@ -128,7 +151,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
       setNewTask({
         title: '',
         date: taskDate, // Manter a data para próxima tarefa
-        service_type: 'Ensaio Fotográfico'
+        service_type: eventTypes.length > 0 ? eventTypes[0].name : 'Ensaio Fotográfico'
       });
     } catch (error) {
       console.error('Erro ao adicionar tarefa:', error);
@@ -262,6 +285,9 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
               onChange={(e) => setNewTask(prev => ({ ...prev, service_type: e.target.value }))}
               className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500 transition-colors text-white"
             >
+              {eventTypes.length === 0 && (
+                <option value="">Carregando...</option>
+              )}
               {eventTypes.map(type => (
                 <option key={type.id} value={type.name}>
                   {type.name} ({type.days} {type.days === 1 ? 'dia' : 'dias'})
@@ -269,7 +295,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
               ))}
             </select>
             
-            {!newTask.date && (
+            {!newTask.date && newTask.service_type && (
               <div className="text-xs text-gray-400 ml-2">
                 Previsão: +{getEventTypeDays(newTask.service_type)} dias
               </div>
