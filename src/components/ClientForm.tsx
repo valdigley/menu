@@ -168,8 +168,32 @@ const ClientForm: React.FC<ClientFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Simular envio (aqui você integraria com sua API)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Tentar enviar via API se disponível
+      try {
+        const response = await fetch('/api/client-forms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+          throw new Error('API não disponível');
+        }
+      } catch (apiError) {
+        console.log('API não disponível, salvando localmente');
+        
+        // Fallback: salvar no localStorage
+        const clientForms = JSON.parse(localStorage.getItem('clientForms') || '[]');
+        const newForm = {
+          ...formData,
+          id: Date.now().toString(),
+          submitted_at: new Date().toISOString()
+        };
+        clientForms.push(newForm);
+        localStorage.setItem('clientForms', JSON.stringify(clientForms));
+      }
       
       if (onSubmit) {
         onSubmit(formData);
@@ -179,6 +203,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
       setCurrentStep(4);
     } catch (error) {
       console.error('Erro ao enviar formulário:', error);
+      alert('Erro ao enviar formulário. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
