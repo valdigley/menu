@@ -360,61 +360,76 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3 cursor-pointer hover:shadow-md transition-all ${
-                                  snapshot.isDragging ? 'rotate-2 shadow-xl ring-2 ring-blue-500' : ''
+                                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3 transition-all ${
+                                  snapshot.isDragging ? 'rotate-2 shadow-xl ring-2 ring-blue-500' : 'hover:shadow-md'
                                 }`}
-                                onClick={() => {
-                                  setSelectedTask(task);
-                                  setShowTaskDetails(true);
-                                }}
                               >
-                                <div className="flex items-start justify-between mb-2">
-                                  <h3 className="font-medium text-gray-900 text-sm line-clamp-2">
-                                    {task.title}
-                                  </h3>
-                                  <div className="flex items-center gap-1 ml-2">
+                                {/* Drag Handle */}
+                                <div
+                                  {...provided.dragHandleProps}
+                                  className="flex items-center justify-between mb-2 cursor-grab active:cursor-grabbing"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex flex-col gap-1">
+                                      <div className="w-3 h-0.5 bg-gray-400 rounded"></div>
+                                      <div className="w-3 h-0.5 bg-gray-400 rounded"></div>
+                                      <div className="w-3 h-0.5 bg-gray-400 rounded"></div>
+                                    </div>
+                                    <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
+                                      {task.title}
+                                    </h3>
+                                  </div>
+                                  <div className="flex items-center gap-1">
                                     <Star className={`h-3 w-3 ${getPriorityColor(task.priority)}`} />
                                     <span className="text-xs text-gray-500">{task.priority}</span>
                                   </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-3 w-3 text-gray-400" />
-                                    <span className="text-xs text-gray-600 truncate">{task.client_name}</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <Tag className="h-3 w-3 text-gray-400" />
-                                    <span className="text-xs text-gray-600">{task.event_type}</span>
-                                  </div>
-
-                                  {task.event_date && (
+                                {/* Clickable Content Area */}
+                                <div
+                                  onClick={() => {
+                                    setSelectedTask(task);
+                                    setShowTaskDetails(true);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <Calendar className="h-3 w-3 text-gray-400" />
-                                      <span className="text-xs text-gray-600">{formatDate(task.event_date)}</span>
+                                      <User className="h-3 w-3 text-gray-400" />
+                                      <span className="text-xs text-gray-600 truncate">{task.client_name}</span>
                                     </div>
-                                  )}
 
-                                  {task.photos_count && (
                                     <div className="flex items-center gap-2">
-                                      <Camera className="h-3 w-3 text-gray-400" />
-                                      <span className="text-xs text-gray-600">{task.photos_count} fotos</span>
+                                      <Tag className="h-3 w-3 text-gray-400" />
+                                      <span className="text-xs text-gray-600">{task.event_type}</span>
                                     </div>
-                                  )}
 
-                                  <div className="flex items-center justify-between pt-2">
-                                    {getPaymentStatusBadge(task.payment_status)}
-                                    
-                                    {task.delivery_date && (
-                                      <div className="flex items-center gap-1">
-                                        <Clock className="h-3 w-3 text-gray-400" />
-                                        <span className="text-xs text-gray-500">
-                                          {formatDate(task.delivery_date)}
-                                        </span>
+                                    {task.event_date && (
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-3 w-3 text-gray-400" />
+                                        <span className="text-xs text-gray-600">{formatDate(task.event_date)}</span>
                                       </div>
                                     )}
+
+                                    {task.photos_count && (
+                                      <div className="flex items-center gap-2">
+                                        <Camera className="h-3 w-3 text-gray-400" />
+                                        <span className="text-xs text-gray-600">{task.photos_count} fotos</span>
+                                      </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between pt-2">
+                                      {getPaymentStatusBadge(task.payment_status)}
+                                      
+                                      {task.delivery_date && (
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-3 w-3 text-gray-400" />
+                                          <span className="text-xs text-gray-500">
+                                            {formatDate(task.delivery_date)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
