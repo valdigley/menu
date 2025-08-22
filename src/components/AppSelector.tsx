@@ -376,6 +376,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
+    if (app.id === 'obrigacoes') {
+      setShowTaskList(true);
+      return;
+    }
+    
     if (app.url === 'internal:configuracao') {
       setShowConfiguration(true);
       return;
@@ -383,11 +388,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     
     if (app.url === 'internal:contratos' || app.id === 'contrato') {
       setShowContractSystem(true);
-      return;
-    }
-    
-    if (app.url === 'internal:configuracao') {
-      setShowConfiguration(true);
       return;
     }
     
