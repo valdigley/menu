@@ -381,7 +381,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
-    if (app.url === 'internal:contratos') {
+    if (app.url === 'internal:contratos' || app.id === 'contrato') {
       setShowContractSystem(true);
       return;
     }
