@@ -11,7 +11,7 @@ interface SimpleTaskListProps {
 interface Task {
   id: string;
   title: string;
-  date: string;
+  due_date: string;
   service_type: string;
   completed: boolean;
   created_at: string;
@@ -53,7 +53,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
         .from('tasks')
         .select('*')
         .eq('user_id', user.id)
-        .order('date', { ascending: true });
+        .order('due_date', { ascending: true });
 
       if (error) throw error;
       setTasks(data || []);
@@ -87,13 +87,13 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
       const taskForList: Task = {
         id: data.id,
         title: newTask.title.trim(),
-        date: newTask.date,
+        due_date: newTask.date,
         service_type: newTask.service_type,
         completed: false,
         created_at: data.created_at
       };
 
-      setTasks(prev => [...prev, taskForList].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      setTasks(prev => [...prev, taskForList].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()));
       
       setNewTask({
         title: '',
@@ -297,7 +297,7 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
                 transition={{ delay: index * 0.05 }}
                 className={`group flex items-center gap-4 p-4 rounded-lg hover:bg-gray-800 transition-colors ${
                   task.completed ? 'opacity-60' : ''
-                } ${isOverdue(task.date, task.completed) ? 'bg-red-900/20' : ''}`}
+                } ${isOverdue(task.due_date, task.completed) ? 'bg-red-900/20' : ''}`}
               >
                 <button
                   onClick={() => toggleTask(task.id, !task.completed)}
@@ -327,11 +327,11 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
                       </span>
                       
                       <span className={`text-xs ${
-                        isOverdue(task.date, task.completed) 
+                        isOverdue(task.due_date, task.completed) 
                           ? 'text-red-400 font-medium' 
                           : 'text-gray-400'
                       }`}>
-                        {formatDate(task.date)}
+                        {formatDate(task.due_date)}
                       </span>
                     </div>
                   </div>
