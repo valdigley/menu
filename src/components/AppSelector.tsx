@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut, User } from 'lucide-react';
 import ConfigurationPage from './ConfigurationPage';
 import UserManagement from './UserManagement';
+import PhotographyTaskManager from './PhotographyTaskManager';
 import { getIconComponent } from '../utils/icons';
 
 interface AppSelectorProps {
@@ -16,6 +17,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [loading, setLoading] = useState(true);
   const [showConfiguration, setShowConfiguration] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showPhotographyTasks, setShowPhotographyTasks] = useState(false);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [systemAccess, setSystemAccess] = useState<{[key: string]: boolean}>({});
@@ -393,17 +395,12 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         }
         
         if (app.id === 'obrigacoes') {
-          // Importar e mostrar o sistema de tarefas fotográficas
-          import('./PhotographyTaskManager').then(({ default: PhotographyTaskManager }) => {
-            // Criar um componente wrapper para renderizar o PhotographyTaskManager
-            const taskManagerElement = document.createElement('div');
-            taskManagerElement.id = 'photography-task-manager';
-            document.body.appendChild(taskManagerElement);
-            
-            // Renderizar o componente (isso seria feito com React.render em um setup real)
-            // Por enquanto, vamos usar uma abordagem mais simples
-            window.location.hash = '#obrigacoes';
-          });
+          setShowPhotographyTasks(true);
+          return;
+        }
+        
+        if (app.id === 'obrigacoes') {
+          setShowPhotographyTasks(true);
           return;
         }
         
@@ -426,27 +423,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     window.open(app.url, '_blank');
   };
 
-  // Verificar se deve mostrar o sistema de tarefas
-  if (window.location.hash === '#obrigacoes') {
-    const PhotographyTaskManager = React.lazy(() => import('./PhotographyTaskManager'));
-    return (
-      <React.Suspense fallback={
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      }>
-        <PhotographyTaskManager
-          user={user}
-          supabase={supabase}
-          onBack={() => {
-            window.location.hash = '';
-            window.location.reload();
-          }}
-        />
-      </React.Suspense>
-    );
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
@@ -466,6 +442,16 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           setCustomButtons(settings.appearance.buttons || []);
           // As configurações já são salvas automaticamente no ConfigurationPage
         }}
+      />
+    );
+  }
+
+  if (showPhotographyTasks) {
+    return (
+      <PhotographyTaskManager
+        user={user}
+        supabase={supabase}
+        onBack={() => setShowPhotographyTasks(false)}
       />
     );
   }
