@@ -77,7 +77,7 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'board' | 'calendar' | 'gantt'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'board' | 'calendar' | 'gantt'>('board');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -484,56 +484,184 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
     ];
 
     return (
-      <div className="flex-1 overflow-x-auto">
-        <div className="flex gap-6 p-6 min-w-max">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
           {statusColumns.map((column) => {
             const columnTasks = getFilteredTasks().filter(task => task.status === column.id);
             
             return (
-              <div key={column.id} className="w-80 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div key={column.id} className="flex flex-col bg-gray-50 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-900 dark:text-white">{column.name}</h3>
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full text-xs">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{column.name}</h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      column.color === 'gray' ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400' :
+                      column.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' :
+                      column.color === 'yellow' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400' :
+                      'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400'
+                    }`}>
                       {columnTasks.length}
                     </span>
                   </div>
                 </div>
                 
-                <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                <div className="flex-1 p-3 space-y-3 overflow-y-auto min-h-0">
                   {columnTasks.map((task) => (
                     <motion.div
                       key={task.id}
                       layout
-                      className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white dark:bg-gray-700 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 cursor-pointer hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group"
                       onClick={() => setSelectedTask(task)}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">{task.title}</h4>
-                        {getPriorityIcon(task.priority)}
+                      {/* Header do Card */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2 flex-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleTaskComplete(task);
+                            }}
+                            className="flex-shrink-0"
+                          >
+                            {task.status === 'completed' ? (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                            )}
+                          </button>
+                          <h4 className={`font-semibold text-sm leading-tight ${
+                            task.status === 'completed' ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'
+                          }`}>
+                            {task.title}
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                          {getPriorityIcon(task.priority)}
+                        </div>
                       </div>
                       
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">{task.client_name}</p>
+                      {/* Cliente */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-medium">
+                            {task.client_name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{task.client_name}</span>
+                      </div>
+
+                      {/* Tipo de Tarefa */}
+                      <div className="flex items-center gap-2 mb-3">
+                        {getTaskTypeIcon(task.task_type)}
+                        <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {task.task_type.replace('_', ' ')}
+                        </span>
+                      </div>
+
+                      {/* Seção de Anotações */}
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MessageSquare className="h-3 w-3 text-gray-400" />
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Anotações</span>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 min-h-[60px]">
+                          {task.notes ? (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                              {task.notes.length > 80 ? `${task.notes.substring(0, 80)}...` : task.notes}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                              Clique para adicionar anotações...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Seção de Processos */}
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Settings className="h-3 w-3 text-gray-400" />
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Processos</span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              task.status === 'completed' || task.status === 'delivered' ? 'bg-green-500' : 'bg-gray-300'
+                            }`}></div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Edição</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              task.payment_status === 'paid' ? 'bg-green-500' : 'bg-gray-300'
+                            }`}></div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Pagamento</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              task.gallery_link ? 'bg-green-500' : 'bg-gray-300'
+                            }`}></div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Entrega</span>
+                          </div>
+                        </div>
+                      </div>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getTaskTypeIcon(task.task_type)}
+                      {/* Footer do Card */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-600">
+                        <div className="flex items-center gap-3">
+                          {/* Data de Entrega */}
                           {task.delivery_date && (
-                            <div className={`flex items-center gap-1 text-xs ${
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs ${
                               isOverdue(task) ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
                             }`}>
                               <Calendar className="h-3 w-3" />
                               <span>{formatDate(task.delivery_date)}</span>
+                              {isOverdue(task) && <AlertCircle className="h-3 w-3" />}
                             </div>
                           )}
+                          
+                          {/* Status de Pagamento */}
+                          <div className={`px-2 py-1 rounded-md text-xs font-medium ${
+                            task.payment_status === 'paid' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
+                            task.payment_status === 'partial' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300' :
+                            'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                          }`}>
+                            {task.payment_status === 'paid' ? '💰 Pago' :
+                             task.payment_status === 'partial' ? '⏳ Parcial' : '❌ Pendente'}
+                          </div>
                         </div>
                         
-                        <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <User className="h-3 w-3 text-gray-600 dark:text-gray-300" />
+                        {/* Arquivos */}
+                        <div className="flex items-center gap-1">
+                          {task.files && task.files.length > 0 && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                              <Paperclip className="h-3 w-3" />
+                              <span>{task.files.length}</span>
+                            </div>
+                          )}
+                          
+                          {/* Botão de ações */}
+                          <button className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-all">
+                            <MoreHorizontal className="h-3 w-3" />
+                          </button>
                         </div>
                       </div>
                     </motion.div>
                   ))}
+                  
+                  {/* Botão para adicionar nova tarefa na coluna */}
+                  {column.id === 'pending' && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setShowNewTask(true)}
+                      className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="text-sm">Adicionar tarefa</span>
+                    </motion.button>
+                  )}
                 </div>
               </div>
             );
