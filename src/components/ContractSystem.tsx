@@ -131,7 +131,7 @@ const ContractSystem: React.FC<ContractSystemProps> = ({ user, supabase, onBack 
       // Carregar pacotes
       const { data: packagesData, error: packagesError } = await supabase
         .from('packages')
-        .select('*')
+        .select('*, event_types(name)')
         .eq('is_active', true)
         .order('price');
 
@@ -140,7 +140,7 @@ const ContractSystem: React.FC<ContractSystemProps> = ({ user, supabase, onBack 
         setPackages([
           { id: '1', name: 'Básico', description: 'Pacote básico', price: 1500, features: ['Fotos digitais', 'Edição básica'], is_active: true },
           { id: '2', name: 'Premium', description: 'Pacote premium', price: 2500, features: ['Fotos digitais', 'Edição avançada', 'Álbum'], is_active: true },
-          { id: '3', name: 'Completo', description: 'Pacote completo', price: 3500, features: ['Fotos digitais', 'Edição avançada', 'Álbum', 'Video'], is_active: true }
+          { id: '3', name: 'Completo', description: 'Pacote completo', price: 3500, features: ['Fotos digitais', 'Edição avançada', 'Álbum', 'Vídeo'], is_active: true }
         ]);
       } else {
         setPackages(packagesData || []);
@@ -610,9 +610,9 @@ const ContractForm: React.FC<{
     setFormData({ ...formData, [field]: value });
   };
 
-  const filteredPackages = packages.filter(pkg => 
+  const filteredPackages = formData.event_type_id ? packages.filter(pkg => 
     !formData.event_type_id || pkg.event_type_id === formData.event_type_id
-  );
+  ) : [];
 
   const calculateFinalPrice = () => {
     const basePrice = formData.package_price || 0;
@@ -799,6 +799,10 @@ const ContractForm: React.FC<{
                       const eventType = eventTypes.find(et => et.id === e.target.value);
                       if (eventType) {
                         updateField('tipo_evento', eventType.name);
+                        // Limpar pacote selecionado quando mudar tipo de evento
+                        updateField('package_id', '');
+                        updateField('package_price', 0);
+                        updateField('final_price', 0);
                       }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -937,12 +941,20 @@ const ContractForm: React.FC<{
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Selecione um pacote</option>
+                    {!formData.event_type_id && (
+                      <option value="" disabled>Primeiro selecione o tipo de evento</option>
+                    )}
                     {filteredPackages.map(pkg => (
                       <option key={pkg.id} value={pkg.id}>
                         {pkg.name} - R$ {pkg.price.toFixed(2)}
                       </option>
                     ))}
                   </select>
+                  {formData.event_type_id && filteredPackages.length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      Nenhum pacote disponível para este tipo de evento
+                    </p>
+                  )}
                 </div>
                 
                 <div>
