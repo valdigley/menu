@@ -26,18 +26,36 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
     service_type: 'Ensaio Fotográfico'
   });
 
-  const serviceTypes = [
-    'Ensaio Fotográfico',
-    'Casamento',
-    'Aniversário',
-    'Formatura',
-    'Corporativo',
-    'Produto',
-    'Evento',
-    'Edição de Fotos',
-    'Entrega de Álbum',
-    'Reunião com Cliente'
-  ];
+  const [eventTypes, setEventTypes] = useState<any[]>([]);
+
+  // Carregar tipos de eventos das configurações
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('systemSettings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        if (parsedSettings.eventTypes?.types) {
+          setEventTypes(parsedSettings.eventTypes.types);
+        } else {
+          // Fallback para tipos padrão
+          setEventTypes([
+            { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
+            { id: 'casamento', name: 'Casamento', days: 30, color: '#ec4899' },
+            { id: 'aniversario', name: 'Aniversário', days: 14, color: '#f59e0b' },
+            { id: 'formatura', name: 'Formatura', days: 21, color: '#8b5cf6' },
+            { id: 'corporativo', name: 'Corporativo', days: 10, color: '#6b7280' },
+            { id: 'produto', name: 'Produto', days: 5, color: '#10b981' },
+            { id: 'evento', name: 'Evento', days: 14, color: '#f97316' },
+            { id: 'edicao', name: 'Edição de Fotos', days: 3, color: '#6366f1' },
+            { id: 'album', name: 'Entrega de Álbum', days: 45, color: '#ef4444' },
+            { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6' }
+          ]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar tipos de eventos:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     loadTasks();
@@ -66,8 +84,18 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
   const addTask = async () => {
     if (!supabase || !newTask.title.trim()) return;
 
-    // Se não tem data, usar hoje
-    const taskDate = newTask.date || new Date().toISOString().split('T')[0];
+    // Calcular data baseada no tipo de evento
+    let taskDate = newTask.date;
+    
+    if (!taskDate) {
+      // Se não tem data, calcular baseado no tipo de evento
+      const selectedEventType = eventTypes.find(type => type.name === newTask.service_type);
+      const daysToAdd = selectedEventType?.days || 7;
+      
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + daysToAdd);
+      taskDate = futureDate.toISOString().split('T')[0];
+    }
 
     try {
       const { data, error } = await supabase
@@ -177,19 +205,13 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
   };
 
   const getServiceColor = (serviceType: string) => {
-    const colors = {
-      'Ensaio Fotográfico': '#3b82f6',
-      'Casamento': '#ec4899',
-      'Aniversário': '#f59e0b',
-      'Formatura': '#8b5cf6',
-      'Corporativo': '#6b7280',
-      'Produto': '#10b981',
-      'Evento': '#f97316',
-      'Edição de Fotos': '#6366f1',
-      'Entrega de Álbum': '#ef4444',
-      'Reunião com Cliente': '#14b8a6'
-    };
-    return colors[serviceType as keyof typeof colors] || '#6b7280';
+    const eventType = eventTypes.find(type => type.name === serviceType);
+    return eventType?.color || '#6b7280';
+  };
+
+  const getEventTypeDays = (serviceType: string) => {
+    const eventType = eventTypes.find(type => type.name === serviceType);
+    return eventType?.days || 7;
   };
 
   return (
@@ -240,10 +262,18 @@ const SimpleTaskList: React.FC<SimpleTaskListProps> = ({ user, supabase, onBack 
               onChange={(e) => setNewTask(prev => ({ ...prev, service_type: e.target.value }))}
               className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500 transition-colors text-white"
             >
-              {serviceTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+              {eventTypes.map(type => (
+                <option key={type.id} value={type.name}>
+                  {type.name} ({type.days} {type.days === 1 ? 'dia' : 'dias'})
+                </option>
               ))}
             </select>
+            
+            {!newTask.date && (
+              <div className="text-xs text-gray-400 ml-2">
+                Previsão: +{getEventTypeDays(newTask.service_type)} dias
+              </div>
+            )}
           </div>
         </div>
 

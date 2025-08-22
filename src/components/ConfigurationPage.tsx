@@ -93,6 +93,20 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           isActive: true
         }
       ]
+    },
+    eventTypes: {
+      types: [
+        { id: 'ensaio', name: 'Ensaio Fotográfico', days: 7, color: '#3b82f6' },
+        { id: 'casamento', name: 'Casamento', days: 30, color: '#ec4899' },
+        { id: 'aniversario', name: 'Aniversário', days: 14, color: '#f59e0b' },
+        { id: 'formatura', name: 'Formatura', days: 21, color: '#8b5cf6' },
+        { id: 'corporativo', name: 'Corporativo', days: 10, color: '#6b7280' },
+        { id: 'produto', name: 'Produto', days: 5, color: '#10b981' },
+        { id: 'evento', name: 'Evento', days: 14, color: '#f97316' },
+        { id: 'edicao', name: 'Edição de Fotos', days: 3, color: '#6366f1' },
+        { id: 'album', name: 'Entrega de Álbum', days: 45, color: '#ef4444' },
+        { id: 'reuniao', name: 'Reunião com Cliente', days: 1, color: '#14b8a6' }
+      ]
     }
   });
   const [loading, setLoading] = useState(false);
@@ -107,6 +121,13 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       icon: Palette,
       description: 'Personalize a interface visual',
       color: 'from-purple-500 to-pink-500'
+    },
+    { 
+      id: 'events', 
+      name: 'Tipos de Eventos', 
+      icon: Calendar,
+      description: 'Configure tipos e prazos',
+      color: 'from-green-500 to-emerald-500'
     }
   ];
 
@@ -189,6 +210,51 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     }
   };
 
+  const updateEventType = (typeId: string, key: string, value: any) => {
+    const newSettings = {
+      ...settings,
+      eventTypes: {
+        ...settings.eventTypes,
+        types: settings.eventTypes.types.map(type => 
+          type.id === typeId ? { ...type, [key]: value } : type
+        )
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  const addEventType = () => {
+    const newType = {
+      id: `custom_${Date.now()}`,
+      name: 'Novo Tipo',
+      days: 7,
+      color: '#3b82f6'
+    };
+
+    const newSettings = {
+      ...settings,
+      eventTypes: {
+        ...settings.eventTypes,
+        types: [...settings.eventTypes.types, newType]
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
+  const removeEventType = (typeId: string) => {
+    const newSettings = {
+      ...settings,
+      eventTypes: {
+        ...settings.eventTypes,
+        types: settings.eventTypes.types.filter(type => type.id !== typeId)
+      }
+    };
+    
+    updateSettingsObject(newSettings);
+  };
+
   // Carregar configurações salvas ao inicializar
   useEffect(() => {
     const savedSettings = localStorage.getItem('systemSettings');
@@ -203,6 +269,10 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
             ...settings.appearance,
             ...parsedSettings.appearance,
             buttons: parsedSettings.appearance?.buttons || settings.appearance.buttons
+          },
+          eventTypes: {
+            ...settings.eventTypes,
+            ...parsedSettings.eventTypes
           }
         };
         setSettings(mergedSettings);
@@ -797,6 +867,124 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     </div>
   );
 
+  const renderEventTypesSettings = () => (
+    <div className="space-y-8">
+      {/* Event Types Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Tipos de Eventos e Prazos
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Configure os tipos de eventos e seus prazos padrão
+              </p>
+            </div>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={addEventType}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar Tipo
+          </motion.button>
+        </div>
+
+        <div className="space-y-4">
+          {settings.eventTypes.types.map((eventType, index) => (
+            <motion.div
+              key={eventType.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: eventType.color }}
+                  ></div>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {eventType.name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => removeEventType(eventType.id)}
+                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  title="Remover tipo"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nome do Tipo
+                  </label>
+                  <input
+                    type="text"
+                    value={eventType.name}
+                    onChange={(e) => updateEventType(eventType.id, 'name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Prazo (dias)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={eventType.days}
+                    onChange={(e) => updateEventType(eventType.id, 'days', parseInt(e.target.value) || 1)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Cor
+                  </label>
+                  <input
+                    type="color"
+                    value={eventType.color}
+                    onChange={(e) => updateEventType(eventType.id, 'color', e.target.value)}
+                    className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-600/50 rounded-lg">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Previsão de entrega:
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {eventType.days} {eventType.days === 1 ? 'dia' : 'dias'} após a data do evento
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+
   const renderGeneralSettings = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -884,6 +1072,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     switch (activeTab) {
       case 'appearance':
         return renderAppearanceSettings();
+      case 'events':
+        return renderEventTypesSettings();
       default:
         return renderAppearanceSettings();
     }
