@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut, User } from 'lucide-react';
 import ConfigurationPage from './ConfigurationPage';
 import UserManagement from './UserManagement';
+import SimpleTaskList from './SimpleTaskList';
 import { getIconComponent } from '../utils/icons';
 
 interface AppSelectorProps {
@@ -16,6 +17,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [loading, setLoading] = useState(true);
   const [showConfiguration, setShowConfiguration] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showTaskList, setShowTaskList] = useState(false);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [systemAccess, setSystemAccess] = useState<{[key: string]: boolean}>({});
@@ -312,6 +314,17 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://obrigacoes.exemplo.com',
       hasAccess: hasBasicSystemAccess('obrigacoes'),
+      isActive: false
+    },
+    {
+      id: 'tarefas',
+      name: 'Tarefas',
+      description: 'Lista simples de tarefas',
+      icon: 'CheckSquare',
+      color: 'green',
+      backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
+      url: 'internal:tarefas',
+      hasAccess: hasBasicSystemAccess('tarefas'),
       isActive: true
     }
   ];
@@ -391,6 +404,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
+    if (app.id === 'tarefas') {
+      setShowTaskList(true);
+      return;
+    }
+    
     if (app.url === 'internal:configuracao') {
       setShowConfiguration(true);
       return;
@@ -419,6 +437,16 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           setCustomButtons(settings.appearance.buttons || []);
           // As configurações já são salvas automaticamente no ConfigurationPage
         }}
+      />
+    );
+  }
+
+  if (showTaskList) {
+    return (
+      <SimpleTaskList
+        user={user}
+        supabase={supabase}
+        onBack={() => setShowTaskList(false)}
       />
     );
   }
