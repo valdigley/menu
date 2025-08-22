@@ -591,7 +591,7 @@ const PhotographyTaskManager: React.FC<PhotographyTaskManagerProps> = ({ user, s
                           className={`flex-1 overflow-y-auto space-y-3 min-h-0 p-2 rounded-lg transition-all ${
                             snapshot.isDraggingOver 
                               ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-600' 
-                            snapshot.isDragging ? 'rotate-2 shadow-xl ring-2 ring-blue-500' : ''
+                              : ''
                           }`}
                         >
                           {columnTasks.map((task, index) => (
