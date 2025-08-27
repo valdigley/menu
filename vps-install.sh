@@ -167,7 +167,7 @@ echo "      INSTALAÇÃO CONCLUÍDA!"
 echo "====================================${NC}"
 echo
 echo -e "${BLUE}📱 Acesse sua aplicação:${NC}"
-echo "   • URL: http://147.93.182.205:3000"
+echo "   • URL: http://fotografo.site:3000"
 echo "   • Login: valdigley2007@gmail.com"
 echo
 echo -e "${BLUE}🛠️  Comandos úteis:${NC}"
@@ -181,4 +181,4 @@ docker-compose ps
 echo
 
 log "Deploy finalizado com sucesso!"
-echo -e "${GREEN}🎯 Acesse: http://147.93.182.205:3000${NC}"
+echo -e "${GREEN}🎯 Acesse: http://fotografo.site:3000${NC}"
