@@ -240,6 +240,12 @@ reboot
 
 ---
 
+**📱 SEU IP ESPECÍFICO:**
+- **URL:** http://147.93.182.205:3000
+- **SSH:** ssh root@147.93.182.205
+
+---
+
 **📱 Dados da aplicação:**
 - **Repositório:** https://github.com/valdigley/menu.git
 - **Supabase:** https://iisejjtimakkwjrbmzvj.supabase.co

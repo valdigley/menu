@@ -23,7 +23,7 @@ sudo ./deploy.sh
 
 ## 🎯 Acesso
 
-- **URL:** `http://SEU-IP:3000`
+- **URL:** `http://147.93.182.205:3000`
 - **Login Master:** `valdigley2007@gmail.com`
 - **Supabase:** https://iisejjtimakkwjrbmzvj.supabase.co
 
