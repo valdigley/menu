@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, LogOut, User, Settings } from 'lucide-react';
+import { Moon, Sun, LogOut } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
 import ConfigurationPage from './ConfigurationPage';
 
@@ -11,7 +11,6 @@ interface AppSelectorProps {
 const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [profile, setProfile] = useState<any>(null);
-  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
@@ -29,7 +28,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   }, []);
 
   useEffect(() => {
-    // Carregar configurações completas do sistema
+    // Carregar configurações do sistema
     const savedSettings = localStorage.getItem('systemSettings');
     if (savedSettings) {
       try {
@@ -37,7 +36,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         if (parsedSettings.appearance) {
           setWallpaperSettings(parsedSettings.appearance);
           if (parsedSettings.appearance.buttons) {
-            // Filtrar botões válidos
             const validButtons = parsedSettings.appearance.buttons.filter(
               (button: any) => button && button.id && button.name
             );
@@ -58,7 +56,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
 
   const loadUserData = async () => {
     try {
-      // Criar perfil básico
       const basicProfile = {
         id: user.id,
         email: user.email || '',
@@ -68,21 +65,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       };
 
       setProfile(basicProfile);
-
-      // Tentar carregar assinaturas
-      if (supabase) {
-        try {
-          const { data: subscriptionsData } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', user.id);
-
-          setSubscriptions(subscriptionsData || []);
-        } catch (error) {
-          console.warn('Erro ao carregar assinaturas:', error);
-          setSubscriptions([]);
-        }
-      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -107,23 +89,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     }
   };
 
-  const hasSystemAccess = (systemId: string): boolean => {
-    if (!profile) return false;
-    
-    // Master tem acesso a tudo
-    if (profile.is_master) return true;
-    
-    // Verificar se tem assinatura ativa geral
-    return subscriptions.some(sub => 
-      sub.manual_access === true ||
-      (
-        sub.status === 'active' && 
-        (sub.plan_type === 'paid' || sub.plan_type === 'trial') &&
-        (!sub.expires_at || new Date(sub.expires_at) > new Date())
-      )
-    );
-  };
-
   const getColorGradient = (color: string) => {
     const gradients = {
       blue: 'from-blue-500 to-indigo-600',
@@ -139,10 +104,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   };
 
   const handleSettingsChange = (settings: any) => {
-    // Atualizar configurações locais
     localStorage.setItem('systemSettings', JSON.stringify(settings));
     
-    // Recarregar configurações
     if (settings.appearance) {
       setWallpaperSettings(settings.appearance);
       if (settings.appearance.buttons) {
@@ -154,7 +117,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     }
   };
 
-  // Usar botões customizados se disponíveis, senão usar padrões
+  // Botões padrão
   const defaultApps = [
     {
       id: 'triagem',
@@ -164,7 +127,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'green',
       backgroundImage: 'https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://triagem.exemplo.com',
-      hasAccess: hasSystemAccess('triagem'),
       isActive: true
     },
     {
@@ -175,7 +137,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'yellow',
       backgroundImage: 'https://images.pexels.com/photos/259027/pexels-photo-259027.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://grana.exemplo.com',
-      hasAccess: hasSystemAccess('grana'),
       isActive: false
     },
     {
@@ -186,7 +147,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'blue',
       backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://contratos.exemplo.com',
-      hasAccess: hasSystemAccess('contrato'),
       isActive: true
     },
     {
@@ -197,7 +157,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'purple',
       backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://automacao.exemplo.com',
-      hasAccess: hasSystemAccess('automacao'),
       isActive: false
     },
     {
@@ -208,23 +167,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'orange',
       backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://obrigacoes.exemplo.com',
-      hasAccess: hasSystemAccess('obrigacoes'),
-      isActive: true
-    },
-    {
-      id: 'configuracao',
-      name: 'Configuração',
-      description: 'Configurações do sistema',
-      icon: 'Settings',
-      color: 'gray',
-      backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: '#',
-      hasAccess: true,
       isActive: true
     }
   ];
 
-  // Mapear botões customizados para o formato esperado
+  // Mapear botões customizados
   const customApps = customButtons.length > 0 ? customButtons.map(button => ({
     id: button.id,
     name: button.name,
@@ -233,11 +180,10 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     color: button.color,
     backgroundImage: button.backgroundImage,
     url: button.url,
-    hasAccess: true, // Sempre true para não afetar o visual
     isActive: button.isActive !== false
   })) : [];
 
-  // Sempre incluir o botão de configuração
+  // Botão de configuração apenas para master
   const configButton = profile?.is_master ? {
     id: 'configuracao',
     name: 'Configuração',
@@ -246,47 +192,34 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     color: 'gray',
     backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
     url: '#',
-    hasAccess: true,
     isActive: true
   } : null;
 
-  // Se há botões customizados, usar eles + configuração, senão usar padrões
+  // Definir apps disponíveis
   const apps = customButtons.length > 0 
     ? [...customApps, ...(configButton ? [configButton] : [])]
-    : profile?.is_master ? defaultApps : defaultApps.filter(app => app.id !== 'configuracao');
+    : profile?.is_master ? [...defaultApps, configButton] : defaultApps.filter(app => app.id !== 'configuracao');
 
   const handleAppClick = (app: any) => {
-    console.log('🔄 Clicou no app:', app.id, app.name);
-    
-    // Se for configuração, mostrar modal interno
     if (app.id === 'configuracao') {
-      console.log('⚙️ Abrindo configurações...');
       setShowConfiguration(true);
       return;
     }
     
-    // Verificar se o sistema está desabilitado ou sem acesso
-    if (app.isActive === false || !app.hasAccess) {
-      console.log('❌ App desabilitado ou sem acesso');
-      return; // Não faz nada, sem mensagens
+    if (app.isActive === false) {
+      return;
     }
     
-    // Abrir link externo
-    console.log('🔗 Abrindo link externo:', app.url);
     window.open(app.url, '_blank');
   };
 
-  // Se está mostrando configurações, renderizar o componente
+  // Se está mostrando configurações
   if (showConfiguration) {
-    console.log('🎛️ Renderizando ConfigurationPage...');
     return (
       <ConfigurationPage
         user={user}
         supabase={supabase}
-        onBack={() => {
-          console.log('⬅️ Voltando das configurações...');
-          setShowConfiguration(false);
-        }}
+        onBack={() => setShowConfiguration(false)}
         onSettingsChange={handleSettingsChange}
       />
     );
@@ -300,7 +233,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     );
   }
 
-  // Determinar qual wallpaper usar
+  // Determinar wallpaper
   const getBackgroundStyle = () => {
     if (wallpaperSettings?.mainWallpaper) {
       return {
@@ -311,7 +244,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       };
     }
     
-    // Fallback para gradiente
     const gradientFrom = wallpaperSettings?.gradientFrom || '#3b82f6';
     const gradientTo = wallpaperSettings?.gradientTo || '#1e40af';
     
@@ -320,14 +252,12 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     };
   };
 
-  console.log('🎯 Apps disponíveis:', apps.map(app => ({ id: app.id, name: app.name })));
-
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4 relative"
       style={getBackgroundStyle()}
     >
-      {/* Overlay para melhorar legibilidade */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
       
       {/* Header Controls */}
@@ -374,9 +304,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
           {apps.map((app) => {
             const IconComponent = getIconComponent(app.icon);
-            const hasAccess = profile?.is_master ? true : hasSystemAccess(app.id);
             const isActive = app.isActive !== false;
-            const isDisabled = profile?.is_master ? false : (!isActive || !hasAccess);
+            const isDisabled = !isActive;
             
             return (
               <div
@@ -403,8 +332,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
                 
                 {/* Content */}
                 <div className="relative h-full flex items-center justify-center z-10">
-                  
-                  {/* Icon */}
                   <div className={`p-4 lg:p-6 rounded-full transition-all duration-300 ${
                     isDisabled
                       ? 'bg-gray-500/30 backdrop-blur-sm'
@@ -415,14 +342,13 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
                     }`} />
                   </div>
                   
-                  {/* Access Status Indicator */}
                   {isDisabled && (
                     <div className="absolute top-3 right-3 w-4 h-4 bg-gray-400 rounded-full border-2 border-gray-200 shadow-lg">
                     </div>
                   )}
                 </div>
                 
-                {/* Tooltip on Hover */}
+                {/* Tooltip */}
                 <div className={`absolute -bottom-16 left-1/2 transform -translate-x-1/2 translate-y-2 bg-gray-900/95 backdrop-blur-md text-white text-sm px-3 py-2 rounded-lg opacity-0 transition-all duration-500 ease-out pointer-events-none whitespace-nowrap z-50 shadow-2xl border border-white/30 ${
                   !isDisabled ? 'group-hover:translate-y-0 group-hover:opacity-100' : ''
                 }`}>

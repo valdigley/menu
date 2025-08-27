@@ -5,15 +5,6 @@ export interface User {
   avatar?: string;
 }
 
-export interface MenuItem {
-  id: string;
-  name: string;
-  icon: string;
-  path: string;
-  color: string;
-  description: string;
-}
-
 export interface Theme {
   mode: 'light' | 'dark';
 }

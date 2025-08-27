@@ -23,7 +23,6 @@ export class SSOManager {
       iat: Date.now()
     };
 
-    // Codifica o payload em base64 (em produção, use JWT real com assinatura)
     return btoa(JSON.stringify(payload));
   }
 
@@ -54,7 +53,6 @@ export class SSOManager {
     if (token && this.isTokenValid(token)) {
       return token;
     }
-    // Remove token expirado
     this.removeToken();
     return null;
   }
@@ -84,30 +82,6 @@ export class SSOManager {
     this.saveToken(token);
     
     const ssoUrl = this.generateSSOUrl(baseUrl, token);
-    
-    // Abrir em nova aba
     window.open(ssoUrl, '_blank');
-  }
-
-  /**
-   * Verifica se o usuário está logado via SSO
-   */
-  static isLoggedIn(): boolean {
-    const token = this.getToken();
-    return token !== null;
-  }
-
-  /**
-   * Obtém dados do usuário do token SSO
-   */
-  static getUserFromToken(): SSOToken | null {
-    const token = this.getToken();
-    if (!token) return null;
-
-    try {
-      return JSON.parse(atob(token));
-    } catch {
-      return null;
-    }
   }
 }
