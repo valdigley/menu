@@ -68,20 +68,19 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [selectedEventType, setSelectedEventType] = useState<any>(null);
 
-  // Carregar tipos de eventos padrão se não fornecidos
+  // Tipos de eventos padrão
   const defaultEventTypes = [
-    { id: 'casamento', name: 'Casamento', color: '#ec4899', basePrice: 3000, is_active: true },
-    { id: 'aniversario', name: 'Aniversário', color: '#f59e0b', basePrice: 800, is_active: true },
-    { id: 'ensaio', name: 'Ensaio Fotográfico', color: '#3b82f6', basePrice: 500, is_active: true },
-    { id: 'formatura', name: 'Formatura', color: '#8b5cf6', basePrice: 1200, is_active: true },
-    { id: 'corporativo', name: 'Corporativo', color: '#6b7280', basePrice: 600, is_active: true }
+    { id: 'casamento', name: 'Casamento', color: '#ec4899', basePrice: 3000 },
+    { id: 'aniversario', name: 'Aniversário', color: '#f59e0b', basePrice: 800 },
+    { id: 'ensaio', name: 'Ensaio Fotográfico', color: '#3b82f6', basePrice: 500 },
+    { id: 'formatura', name: 'Formatura', color: '#8b5cf6', basePrice: 1200 },
+    { id: 'corporativo', name: 'Corporativo', color: '#6b7280', basePrice: 600 }
   ];
 
   const availableEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
 
-  // Carregar pacotes padrão se não fornecidos
+  // Pacotes padrão baseados no tipo de evento
   const getDefaultPackages = (eventType: string) => {
     switch (eventType) {
       case 'casamento':
@@ -113,13 +112,16 @@ const ClientForm: React.FC<ClientFormProps> = ({
     : getDefaultPackages(formData.tipo_evento);
 
   const updateField = (field: keyof FormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log(`🔄 Atualizando campo ${field}:`, value);
     
-    // Atualizar tipo de evento selecionado
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      console.log('📋 Novo formData:', newData);
+      return newData;
+    });
+    
+    // Limpar pacote selecionado quando mudar tipo de evento
     if (field === 'tipo_evento') {
-      const eventType = availableEventTypes.find(type => type.id === value);
-      setSelectedEventType(eventType);
-      // Limpar pacote selecionado quando mudar tipo
       setFormData(prev => ({ ...prev, package_id: '', package_price: 0 }));
     }
     
@@ -168,32 +170,15 @@ const ClientForm: React.FC<ClientFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Tentar enviar via API se disponível
-      try {
-        const response = await fetch('/api/client-forms', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-          throw new Error('API não disponível');
-        }
-      } catch (apiError) {
-        console.log('API não disponível, salvando localmente');
-        
-        // Fallback: salvar no localStorage
-        const clientForms = JSON.parse(localStorage.getItem('clientForms') || '[]');
-        const newForm = {
-          ...formData,
-          id: Date.now().toString(),
-          submitted_at: new Date().toISOString()
-        };
-        clientForms.push(newForm);
-        localStorage.setItem('clientForms', JSON.stringify(clientForms));
-      }
+      // Salvar no localStorage como fallback
+      const clientForms = JSON.parse(localStorage.getItem('clientForms') || '[]');
+      const newForm = {
+        ...formData,
+        id: Date.now().toString(),
+        submitted_at: new Date().toISOString()
+      };
+      clientForms.push(newForm);
+      localStorage.setItem('clientForms', JSON.stringify(clientForms));
       
       if (onSubmit) {
         onSubmit(formData);
@@ -345,375 +330,365 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
         {/* Form Content */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Step 1: Dados Pessoais */}
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      Vamos nos conhecer!
-                    </h2>
-                    <p className="text-gray-600">
-                      Conte-nos um pouco sobre você
-                    </p>
-                  </div>
+          {/* Step 1: Dados Pessoais */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Vamos nos conhecer!
+                </h2>
+                <p className="text-gray-600">
+                  Conte-nos um pouco sobre você
+                </p>
+              </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nome Completo *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.nome_completo}
-                        onChange={(e) => updateField('nome_completo', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                          errors.nome_completo ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Seu nome completo"
-                      />
-                      {errors.nome_completo && (
-                        <p className="text-red-500 text-sm mt-1">{errors.nome_completo}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => updateField('email', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                          errors.email ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="seu@email.com"
-                      />
-                      {errors.email && (
-                        <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        WhatsApp *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.whatsapp}
-                        onChange={(e) => updateField('whatsapp', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                          errors.whatsapp ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="(11) 99999-9999"
-                      />
-                      {errors.whatsapp && (
-                        <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        CPF
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.cpf}
-                        onChange={(e) => updateField('cpf', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="000.000.000-00"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Data de Nascimento
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.data_nascimento}
-                        onChange={(e) => updateField('data_nascimento', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Endereço
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.endereco}
-                        onChange={(e) => updateField('endereco', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Rua, número, bairro"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cidade
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.cidade}
-                        onChange={(e) => updateField('cidade', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Sua cidade"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Dados do Evento */}
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      Conte sobre seu evento
-                    </h2>
-                    <p className="text-gray-600">
-                      Vamos entender todos os detalhes
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tipo de Evento *
-                      </label>
-                      <select
-                        value={formData.tipo_evento}
-                        onChange={(e) => {
-                          console.log('Selecionando tipo de evento:', e.target.value);
-                          updateField('tipo_evento', e.target.value);
-                        }}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                          errors.tipo_evento ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      >
-                        <option value="">Selecione o tipo</option>
-                        {availableEventTypes.map((type, index) => (
-                          <option key={`${type.id}-${index}`} value={type.id}>
-                            {type.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.tipo_evento && (
-                        <p className="text-red-500 text-sm mt-1">{errors.tipo_evento}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Data do Evento *
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.data_evento}
-                        onChange={(e) => updateField('data_evento', e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                          errors.data_evento ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                      {errors.data_evento && (
-                        <p className="text-red-500 text-sm mt-1">{errors.data_evento}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Horário do Evento
-                      </label>
-                      <input
-                        type="time"
-                        value={formData.horario_evento}
-                        onChange={(e) => updateField('horario_evento', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Local da Festa *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.local_festa}
-                        onChange={(e) => updateField('local_festa', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                          errors.local_festa ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="Nome do local ou endereço"
-                      />
-                      {errors.local_festa && (
-                        <p className="text-red-500 text-sm mt-1">{errors.local_festa}</p>
-                      )}
-                    </div>
-
-                    {/* Campos específicos por tipo de evento */}
-                    {(formData.tipo_evento === 'casamento' || selectedEventType?.id === 'casamento') && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nome dos Noivos
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.nome_noivos}
-                            onChange={(e) => updateField('nome_noivos', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="João & Maria"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Local da Cerimônia
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.local_cerimonia}
-                            onChange={(e) => updateField('local_cerimonia', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Igreja, cartório, etc."
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Local do Pré-Wedding
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.local_pre_wedding}
-                            onChange={(e) => updateField('local_pre_wedding', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Local para ensaio pré-casamento"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Local do Making Of
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.local_making_of}
-                            onChange={(e) => updateField('local_making_of', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Local dos preparativos"
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {(formData.tipo_evento === 'aniversario' || selectedEventType?.id === 'aniversario') && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Nome do Aniversariante
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.nome_aniversariante}
-                          onChange={(e) => updateField('nome_aniversariante', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="Nome do aniversariante"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Pacotes */}
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      Escolha seu pacote
-                    </h2>
-                    <p className="text-gray-600">
-                      Selecione o pacote que melhor atende suas necessidades
-                    </p>
-                  </div>
-
-                  {availablePackages.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {availablePackages.map((pkg) => (
-                        <motion.div
-                          key={pkg.id}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            updateField('package_id', pkg.id);
-                            updateField('package_price', pkg.price);
-                          }}
-                          className={`p-6 border-2 rounded-2xl cursor-pointer transition-all ${
-                            formData.package_id === pkg.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="text-center">
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                              {pkg.name}
-                            </h3>
-                            <div className="text-3xl font-bold text-blue-600 mb-4">
-                              {formatCurrency(pkg.price)}
-                            </div>
-                            <p className="text-gray-600 text-sm mb-4">
-                              {pkg.description}
-                            </p>
-                            {formData.package_id === pkg.id && (
-                              <div className="flex items-center justify-center text-blue-600">
-                                <Check className="h-5 w-5 mr-2" />
-                                Selecionado
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-600">
-                        Primeiro selecione o tipo de evento para ver os pacotes disponíveis.
-                      </p>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome Completo *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nome_completo}
+                    onChange={(e) => updateField('nome_completo', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.nome_completo ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Seu nome completo"
+                  />
+                  {errors.nome_completo && (
+                    <p className="text-red-500 text-sm mt-1">{errors.nome_completo}</p>
                   )}
+                </div>
 
-                  {errors.package_id && (
-                    <p className="text-red-500 text-sm text-center">{errors.package_id}</p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => updateField('email', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="seu@email.com"
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                   )}
+                </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    WhatsApp *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.whatsapp}
+                    onChange={(e) => updateField('whatsapp', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.whatsapp ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="(11) 99999-9999"
+                  />
+                  {errors.whatsapp && (
+                    <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    CPF
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cpf}
+                    onChange={(e) => updateField('cpf', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Data de Nascimento
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.data_nascimento}
+                    onChange={(e) => updateField('data_nascimento', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Endereço
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.endereco}
+                    onChange={(e) => updateField('endereco', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Rua, número, bairro"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cidade
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.cidade}
+                    onChange={(e) => updateField('cidade', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Sua cidade"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Dados do Evento */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Conte sobre seu evento
+                </h2>
+                <p className="text-gray-600">
+                  Vamos entender todos os detalhes
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Evento *
+                  </label>
+                  <select
+                    value={formData.tipo_evento}
+                    onChange={(e) => {
+                      console.log('🎯 Select onChange - valor:', e.target.value);
+                      updateField('tipo_evento', e.target.value);
+                    }}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.tipo_evento ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Selecione o tipo</option>
+                    {availableEventTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.tipo_evento && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tipo_evento}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Data do Evento *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.data_evento}
+                    onChange={(e) => updateField('data_evento', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.data_evento ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.data_evento && (
+                    <p className="text-red-500 text-sm mt-1">{errors.data_evento}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Horário do Evento
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.horario_evento}
+                    onChange={(e) => updateField('horario_evento', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Local da Festa *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.local_festa}
+                    onChange={(e) => updateField('local_festa', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.local_festa ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Nome do local ou endereço"
+                  />
+                  {errors.local_festa && (
+                    <p className="text-red-500 text-sm mt-1">{errors.local_festa}</p>
+                  )}
+                </div>
+
+                {/* Campos específicos por tipo de evento */}
+                {formData.tipo_evento === 'casamento' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nome dos Noivos
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nome_noivos}
+                        onChange={(e) => updateField('nome_noivos', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="João & Maria"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Local da Cerimônia
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.local_cerimonia}
+                        onChange={(e) => updateField('local_cerimonia', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Igreja, cartório, etc."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Local do Pré-Wedding
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.local_pre_wedding}
+                        onChange={(e) => updateField('local_pre_wedding', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Local para ensaio pré-casamento"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Local do Making Of
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.local_making_of}
+                        onChange={(e) => updateField('local_making_of', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Local dos preparativos"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {formData.tipo_evento === 'aniversario' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Observações Adicionais
+                      Nome do Aniversariante
                     </label>
-                    <textarea
-                      value={formData.observacoes}
-                      onChange={(e) => updateField('observacoes', e.target.value)}
-                      rows={4}
+                    <input
+                      type="text"
+                      value={formData.nome_aniversariante}
+                      onChange={(e) => updateField('nome_aniversariante', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Conte-nos mais detalhes sobre seu evento, expectativas especiais, etc."
+                      placeholder="Nome do aniversariante"
                     />
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Pacotes */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Escolha seu pacote
+                </h2>
+                <p className="text-gray-600">
+                  Selecione o pacote que melhor atende suas necessidades
+                </p>
+              </div>
+
+              {availablePackages.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {availablePackages.map((pkg) => (
+                    <motion.div
+                      key={pkg.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        updateField('package_id', pkg.id);
+                        updateField('package_price', pkg.price);
+                      }}
+                      className={`p-6 border-2 rounded-2xl cursor-pointer transition-all ${
+                        formData.package_id === pkg.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {pkg.name}
+                        </h3>
+                        <div className="text-3xl font-bold text-blue-600 mb-4">
+                          {formatCurrency(pkg.price)}
+                        </div>
+                        <p className="text-gray-600 text-sm mb-4">
+                          {pkg.description}
+                        </p>
+                        {formData.package_id === pkg.id && (
+                          <div className="flex items-center justify-center text-blue-600">
+                            <Check className="h-5 w-5 mr-2" />
+                            Selecionado
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-600">
+                    Primeiro selecione o tipo de evento para ver os pacotes disponíveis.
+                  </p>
                 </div>
               )}
-            </motion.div>
-          </AnimatePresence>
+
+              {errors.package_id && (
+                <p className="text-red-500 text-sm text-center">{errors.package_id}</p>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Observações Adicionais
+                </label>
+                <textarea
+                  value={formData.observacoes}
+                  onChange={(e) => updateField('observacoes', e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Conte-nos mais detalhes sobre seu evento, expectativas especiais, etc."
+                />
+              </div>
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
