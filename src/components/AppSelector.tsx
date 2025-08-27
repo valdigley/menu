@@ -37,29 +37,44 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     try {
       // Tentar carregar do Supabase primeiro
       if (supabase && user) {
-        const { data, error } = await supabase
+        // Primeiro tentar carregar configurações do usuário
+        let { data: userData, error: userError } = await supabase
           .from('user_settings')
           .select('settings')
           .eq('user_id', user.id)
           .limit(1);
 
-        // Se há dados retornados
-        if (data && data.length > 0 && data[0].settings) {
-          if (data[0].settings.appearance) {
-            setWallpaperSettings(data[0].settings.appearance);
-            if (data[0].settings.appearance.buttons) {
-              const validButtons = data[0].settings.appearance.buttons.filter(
+        // Se usuário não tem configurações próprias, usar as do master
+        if (!userData || userData.length === 0 || !userData[0]?.settings) {
+          const { data: masterData, error: masterError } = await supabase
+            .from('user_settings')
+            .select('settings')
+            .eq('user_id', (
+              await supabase
+                .from('users')
+                .select('id')
+                .eq('email', 'valdigley2007@gmail.com')
+                .limit(1)
+            ).data?.[0]?.id)
+            .limit(1);
+
+          if (masterData && masterData.length > 0 && masterData[0].settings) {
+            userData = masterData;
+          }
+        }
+
+        // Aplicar configurações encontradas
+        if (userData && userData.length > 0 && userData[0].settings) {
+          if (userData[0].settings.appearance) {
+            setWallpaperSettings(userData[0].settings.appearance);
+            if (userData[0].settings.appearance.buttons) {
+              const validButtons = userData[0].settings.appearance.buttons.filter(
                 (button: any) => button && button.id && button.name
               );
               setCustomButtons(validButtons);
             }
           }
           return;
-        } else {
-          // Se há um erro real (não apenas "sem dados"), logar
-          if (error) {
-            console.error('Erro ao carregar configurações do Supabase:', error);
-          }
         }
       }
 
@@ -77,12 +92,20 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
               setCustomButtons(validButtons);
             }
           }
+          return;
         } catch (error) {
           console.error('Erro ao carregar configurações:', error);
         }
       }
+
+      // Se não há configurações, usar padrões
+      setWallpaperSettings(SSOManager.getDefaultSettings().appearance);
+      setCustomButtons(SSOManager.getDefaultSettings().appearance.buttons);
     } catch (error) {
       console.error('Erro ao carregar configurações do usuário:', error);
+      // Em caso de erro, usar configurações padrão
+      setWallpaperSettings(SSOManager.getDefaultSettings().appearance);
+      setCustomButtons(SSOManager.getDefaultSettings().appearance.buttons);
     } finally {
       setLoading(false);
     }

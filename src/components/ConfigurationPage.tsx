@@ -210,6 +210,35 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           setSaveError('Erro ao salvar no servidor. Salvando localmente...');
         } else {
           setSaveSuccess('Configurações salvas com sucesso!');
+          
+          // Se é o usuário master, propagar configurações para usuários sem configurações próprias
+          if (user.email === 'valdigley2007@gmail.com') {
+            try {
+              // Buscar usuários que não têm configurações próprias
+              const { data: usersWithoutSettings } = await supabase
+                .from('users')
+                .select('id')
+                .not('id', 'in', `(${
+                  (await supabase.from('user_settings').select('user_id')).data?.map(s => `'${s.user_id}'`).join(',') || "''"
+                })`);
+
+              // Criar configurações para usuários sem configurações
+              if (usersWithoutSettings && usersWithoutSettings.length > 0) {
+                const settingsToCreate = usersWithoutSettings.map(user => ({
+                  user_id: user.id,
+                  settings: settings,
+                  updated_at: new Date().toISOString()
+                }));
+
+                await supabase
+                  .from('user_settings')
+                  .insert(settingsToCreate);
+              }
+            } catch (propagationError) {
+              console.error('Erro ao propagar configurações:', propagationError);
+              // Não mostrar erro para o usuário, é apenas uma funcionalidade adicional
+            }
+          }
         }
       }
 

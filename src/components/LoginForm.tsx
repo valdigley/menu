@@ -19,18 +19,47 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
 
   useEffect(() => {
-    // Carregar configurações completas do sistema
-    const savedSettings = localStorage.getItem('systemSettings');
-    if (savedSettings) {
+    // Carregar configurações do sistema para tela de login
+    const loadLoginSettings = async () => {
       try {
-        const parsedSettings = JSON.parse(savedSettings);
-        if (parsedSettings.appearance) {
-          setWallpaperSettings(parsedSettings.appearance);
+        // Tentar carregar configurações do master do Supabase
+        if (supabase) {
+          const { data: masterData } = await supabase
+            .from('user_settings')
+            .select('settings')
+            .eq('user_id', (
+              await supabase
+                .from('users')
+                .select('id')
+                .eq('email', 'valdigley2007@gmail.com')
+                .limit(1)
+            ).data?.[0]?.id)
+            .limit(1);
+
+          if (masterData && masterData.length > 0 && masterData[0].settings?.appearance) {
+            setWallpaperSettings(masterData[0].settings.appearance);
+            return;
+          }
+        }
+
+        // Fallback para localStorage
+        const savedSettings = localStorage.getItem('systemSettings');
+        if (savedSettings) {
+          try {
+            const parsedSettings = JSON.parse(savedSettings);
+            if (parsedSettings.appearance) {
+              setWallpaperSettings(parsedSettings.appearance);
+            }
+          } catch (error) {
+            console.error('Erro ao carregar configurações:', error);
+          }
         }
       } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
+        console.error('Erro ao carregar configurações de login:', error);
       }
-    }
+    };
+
+    loadLoginSettings();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

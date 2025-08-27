@@ -158,4 +158,51 @@ export class SSOManager {
       }
     };
   }
+
+  /**
+   * Cria configurações iniciais para um novo usuário baseadas no master
+   */
+  static async createUserSettingsFromMaster(supabase: any, userId: string, masterSettings?: any): Promise<void> {
+    try {
+      let settingsToUse = masterSettings;
+
+      // Se não foram fornecidas configurações do master, buscar
+      if (!settingsToUse && supabase) {
+        const { data: masterData } = await supabase
+          .from('user_settings')
+          .select('settings')
+          .eq('user_id', (
+            await supabase
+              .from('users')
+              .select('id')
+              .eq('email', 'valdigley2007@gmail.com')
+              .limit(1)
+          ).data?.[0]?.id)
+          .limit(1);
+
+        if (masterData && masterData.length > 0) {
+          settingsToUse = masterData[0].settings;
+        }
+      }
+
+      // Se ainda não há configurações, usar padrões
+      if (!settingsToUse) {
+        settingsToUse = this.getDefaultSettings();
+      }
+
+      // Criar configurações para o novo usuário
+      await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: userId,
+          settings: settingsToUse,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+    } catch (error) {
+      console.error('Erro ao criar configurações do usuário:', error);
+    }
+  }
 }
