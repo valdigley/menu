@@ -48,8 +48,20 @@ if curl -f -s http://localhost:$APP_PORT > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Aplicação rodando na porta $APP_PORT${NC}"
 else
     echo -e "${RED}❌ Aplicação não está rodando na porta $APP_PORT${NC}"
-    echo -e "${YELLOW}Execute: docker-compose up -d${NC}"
-    exit 1
+    echo -e "${YELLOW}Vamos tentar subir a aplicação primeiro...${NC}"
+    
+    # Tentar subir aplicação
+    cd /var/www/menu
+    docker-compose up -d
+    sleep 10
+    
+    if curl -f -s http://localhost:$APP_PORT > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Aplicação agora está rodando na porta $APP_PORT${NC}"
+    else
+        echo -e "${RED}❌ Não foi possível subir a aplicação${NC}"
+        echo -e "${YELLOW}Verifique os logs: docker-compose logs${NC}"
+        exit 1
+    fi
 fi
 
 # Gerar certificado SSL (método webroot para não interferir com outros sites)
