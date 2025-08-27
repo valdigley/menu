@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Upload, X, Plus, Edit, Trash2, Palette, ExternalLink, Settings as SettingsIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getIconComponent } from '../utils/icons';
+import { SSOManager } from '../utils/sso';
 
 interface ConfigurationPageProps {
   user: any;
@@ -44,6 +45,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
   const [saving, setSaving] = useState(false);
   const [editingButton, setEditingButton] = useState<ButtonConfig | null>(null);
   const [showAddButton, setShowAddButton] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
 
   // Botões padrão
   const defaultButtons: ButtonConfig[] = [
@@ -117,28 +120,59 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
-    const savedSettings = localStorage.getItem('systemSettings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings(prev => ({
-          ...prev,
-          ...parsedSettings,
-          appearance: {
-            ...prev.appearance,
-            ...parsedSettings.appearance,
-            buttons: parsedSettings.appearance?.buttons || defaultButtons
-          }
-        }));
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
+  const loadSettings = async () => {
+    try {
+      // Primeiro tentar carregar do Supabase
+      if (supabase && user) {
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('settings')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data && data.settings) {
+          setSettings(prev => ({
+            ...prev,
+            ...data.settings,
+            appearance: {
+              ...prev.appearance,
+              ...data.settings.appearance,
+              buttons: data.settings.appearance?.buttons || defaultButtons
+            }
+          }));
+          return;
+        }
+      }
+
+      // Fallback para localStorage
+      const savedSettings = localStorage.getItem('systemSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          setSettings(prev => ({
+            ...prev,
+            ...parsedSettings,
+            appearance: {
+              ...prev.appearance,
+              ...parsedSettings.appearance,
+              buttons: parsedSettings.appearance?.buttons || defaultButtons
+            }
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar configurações do localStorage:', error);
+          setSettings(prev => ({
+            ...prev,
+            appearance: { ...prev.appearance, buttons: defaultButtons }
+          }));
+        }
+      } else {
         setSettings(prev => ({
           ...prev,
           appearance: { ...prev.appearance, buttons: defaultButtons }
         }));
       }
-    } else {
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
       setSettings(prev => ({
         ...prev,
         appearance: { ...prev.appearance, buttons: defaultButtons }
@@ -148,13 +182,40 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
 
   const saveSettings = async () => {
     setSaving(true);
+    setSaveError('');
+    setSaveSuccess('');
+    
     try {
+      // Salvar no Supabase primeiro
+      if (supabase && user) {
+        const { error } = await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: user.id,
+            settings: settings,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Erro ao salvar no Supabase:', error);
+          setSaveError('Erro ao salvar no servidor. Salvando localmente...');
+        } else {
+          setSaveSuccess('Configurações salvas com sucesso!');
+        }
+      }
+
+      // Sempre salvar no localStorage como backup
       localStorage.setItem('systemSettings', JSON.stringify(settings));
       onSettingsChange(settings);
       
-      setTimeout(() => setSaving(false), 1000);
+      setTimeout(() => {
+        setSaving(false);
+        setSaveSuccess('');
+        setSaveError('');
+      }, 2000);
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
+      setSaveError('Erro ao salvar configurações');
       setSaving(false);
     }
   };
@@ -168,6 +229,35 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
 
   const handleImageUpload = async (file: File, type: 'main' | 'lock' | 'button', buttonId?: string) => {
     try {
+      // Upload para Supabase Storage se disponível
+      if (supabase && user) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${type}-${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('user-uploads')
+          .upload(fileName, file);
+
+        if (!error && data) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('user-uploads')
+            .getPublicUrl(fileName);
+
+          if (type === 'button' && buttonId) {
+            const updatedButtons = settings.appearance.buttons.map(btn =>
+              btn.id === buttonId ? { ...btn, backgroundImage: publicUrl } : btn
+            );
+            updateSettings('appearance', { buttons: updatedButtons });
+          } else {
+            updateSettings('appearance', {
+              [type === 'main' ? 'mainWallpaper' : 'lockScreenWallpaper']: publicUrl
+            });
+          }
+          return;
+        }
+      }
+
+      // Fallback para base64 se Supabase não estiver disponível
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
@@ -287,6 +377,22 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           </div>
         </div>
       </div>
+
+      {/* Mensagens de feedback */}
+      {(saveSuccess || saveError) && (
+        <div className="fixed bottom-4 right-4 z-50">
+          {saveSuccess && (
+            <div className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+              {saveSuccess}
+            </div>
+          )}
+          {saveError && (
+            <div className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+              {saveError}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -597,6 +703,17 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
                             }}
                           />
                         </label>
+                        {editingButton.url && (
+                          <a
+                            href={editingButton.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer transition-colors"
+                            title="Testar link"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        )}
                       </div>
                     </div>
                     

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
+import { SSOManager } from '../utils/sso';
 import ConfigurationPage from './ConfigurationPage';
 
 interface AppSelectorProps {
@@ -29,24 +30,55 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
 
   useEffect(() => {
     // Carregar configurações do sistema
-    const savedSettings = localStorage.getItem('systemSettings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        if (parsedSettings.appearance) {
-          setWallpaperSettings(parsedSettings.appearance);
-          if (parsedSettings.appearance.buttons) {
-            const validButtons = parsedSettings.appearance.buttons.filter(
-              (button: any) => button && button.id && button.name
-            );
-            setCustomButtons(validButtons);
+    loadUserSettings();
+  }, [user]);
+
+  const loadUserSettings = async () => {
+    try {
+      // Tentar carregar do Supabase primeiro
+      if (supabase && user) {
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('settings')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data && data.settings) {
+          if (data.settings.appearance) {
+            setWallpaperSettings(data.settings.appearance);
+            if (data.settings.appearance.buttons) {
+              const validButtons = data.settings.appearance.buttons.filter(
+                (button: any) => button && button.id && button.name
+              );
+              setCustomButtons(validButtons);
+            }
           }
+          return;
         }
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
       }
+
+      // Fallback para localStorage
+      const savedSettings = localStorage.getItem('systemSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          if (parsedSettings.appearance) {
+            setWallpaperSettings(parsedSettings.appearance);
+            if (parsedSettings.appearance.buttons) {
+              const validButtons = parsedSettings.appearance.buttons.filter(
+                (button: any) => button && button.id && button.name
+              );
+              setCustomButtons(validButtons);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao carregar configurações:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações do usuário:', error);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (user) {
@@ -104,6 +136,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   };
 
   const handleSettingsChange = (settings: any) => {
+    // Salvar no localStorage como backup
     localStorage.setItem('systemSettings', JSON.stringify(settings));
     
     if (settings.appearance) {
@@ -115,6 +148,9 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         setCustomButtons(validButtons);
       }
     }
+
+    // Recarregar configurações
+    loadUserSettings();
   };
 
   // Botões padrão
@@ -210,7 +246,15 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
-    window.open(app.url, '_blank');
+    // Usar SSO se disponível
+    if (user && app.url && app.url !== '#') {
+      try {
+        SSOManager.openSystemWithSSO(app.url, user);
+      } catch (error) {
+        console.error('Erro no SSO, abrindo link normal:', error);
+        window.open(app.url, '_blank');
+      }
+    }
   };
 
   // Se está mostrando configurações
