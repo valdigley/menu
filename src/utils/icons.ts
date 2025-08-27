@@ -10,7 +10,10 @@ import {
   Wifi, Bluetooth, Radio, Signal, Battery, Power,
   Lightbulb, Sun, Moon, Cloud, Umbrella, Thermometer,
   Activity, BarChart, PieChart, TrendingUp, TrendingDown, LineChart,
-  User, LogOut, CheckSquare
+  User, LogOut, CheckSquare, Bookmark, BookOpen, Coffee, Gift,
+  Headphones, Mic, Monitor, Printer, Smartphone, Tablet, Watch,
+  Globe, Link, Share, Tag, Folder, Archive, Clipboard, Edit,
+  Plus, Minus, X, Check, AlertTriangle, Info, HelpCircle
 } from 'lucide-react';
 
 export const getIconComponent = (iconName: string) => {
@@ -38,7 +41,12 @@ export const getIconComponent = (iconName: string) => {
     // Analytics
     BarChart, PieChart, TrendingUp, TrendingDown, LineChart, Activity,
     // Outros
-    User, Moon, Sun, LogOut, CheckSquare
+    User, Moon, Sun, LogOut, CheckSquare,
+    // Novos ícones
+    Bookmark, BookOpen, Coffee, Gift, Headphones, Mic, Monitor, 
+    Printer, Smartphone, Tablet, Watch, Globe, Link, Share, Tag,
+    Folder, Archive, Clipboard, Edit, Plus, Minus, X, Check,
+    AlertTriangle, Info, HelpCircle
   };
   
   return iconMap[iconName] || Settings; // Fallback para Settings se não encontrar

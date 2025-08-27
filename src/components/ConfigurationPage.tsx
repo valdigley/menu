@@ -102,6 +102,10 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     'Heart', 'DollarSign', 'FileText', 'Zap', 'CheckSquare', 'Settings', 'User', 'Calendar',
     'Camera', 'Image', 'Mail', 'Phone', 'Star', 'Award', 'Target', 'Shield', 'Lock',
     'Database', 'Server', 'Cloud', 'Activity', 'BarChart', 'TrendingUp', 'Search'
+    'Bookmark', 'BookOpen', 'Coffee', 'Gift', 'Headphones', 'Mic', 'Monitor',
+    'Printer', 'Smartphone', 'Tablet', 'Watch', 'Globe', 'Link', 'Share', 'Tag',
+    'Folder', 'Archive', 'Clipboard', 'Edit', 'Plus', 'Minus', 'X', 'Check',
+    'AlertTriangle', 'Info', 'HelpCircle'
   ];
 
   // Cores disponíveis
