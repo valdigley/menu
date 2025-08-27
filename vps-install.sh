@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# VPS Installer for Menu Valdigley
+# VPS Installer for Menu Valdigley - Fixed for minimal systems
 # Usage: curl -fsSL https://raw.githubusercontent.com/valdigley/menu/main/vps-install.sh | bash
 
 set -e
@@ -39,17 +39,44 @@ echo
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
     error "Execute como root: sudo bash"
+    echo "Se sudo não estiver disponível, execute como root direto"
     exit 1
 fi
 
+# Install basic utilities first (for minimal systems)
+info "Instalando utilitários básicos..."
+apt update
+apt install -y sudo curl wget git build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release
+log "Utilitários básicos instalados"
+
 # Update system
 info "Atualizando sistema..."
-apt update && apt upgrade -y
+apt update
+apt upgrade -y
 log "Sistema atualizado"
 
 # Install Docker
 info "Instalando Docker..."
-if ! command -v docker &> /dev/null; then
+if ! which docker > /dev/null 2>&1; then
+    # Remove old versions
+    apt remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
+    
+    # Add Docker's official GPG key
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    
+    # Add repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Install Docker
+    apt update
+    apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
+    # Alternative method if above fails
+    if ! which docker > /dev/null 2>&1; then
+        curl -fsSL https://get.docker.com | sh
+    fi
+    
     curl -fsSL https://get.docker.com | sh
     systemctl enable docker
     systemctl start docker
@@ -60,7 +87,21 @@ fi
 
 # Install Docker Compose
 info "Instalando Docker Compose..."
-if ! command -v docker-compose &> /dev/null; then
+if ! which docker-compose > /dev/null 2>&1; then
+    # Try plugin first (newer method)
+    if which docker > /dev/null 2>&1 && docker compose version > /dev/null 2>&1; then
+        # Create alias for docker-compose
+        echo '#!/bin/bash' > /usr/local/bin/docker-compose
+        echo 'docker compose "$@"' >> /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        log "Docker Compose (plugin) configurado"
+    else
+        # Install standalone version
+        DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+        curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        log "Docker Compose standalone instalado"
+    fi
     curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
     log "Docker Compose instalado"
@@ -70,7 +111,7 @@ fi
 
 # Install Node.js
 info "Instalando Node.js..."
-if ! command -v node &> /dev/null; then
+if ! which node > /dev/null 2>&1; then
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
     apt-get install -y nodejs
     log "Node.js instalado"
@@ -80,7 +121,7 @@ fi
 
 # Install Git
 info "Instalando Git..."
-if ! command -v git &> /dev/null; then
+if ! which git > /dev/null 2>&1; then
     apt-get install -y git
     log "Git instalado"
 else
@@ -89,11 +130,19 @@ fi
 
 # Configure firewall
 info "Configurando firewall..."
-ufw allow 22/tcp
-ufw allow 3000/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-echo "y" | ufw enable
+if which ufw > /dev/null 2>&1; then
+    ufw allow 22/tcp
+    ufw allow 3000/tcp
+    ufw allow 80/tcp
+    ufw allow 443/tcp
+    echo "y" | ufw enable
+else
+    warn "UFW não disponível, configurando iptables..."
+    iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+    iptables -A INPUT -p tcp --dport 3000 -j ACCEPT
+    iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+fi
 log "Firewall configurado"
 
 # Create project directory
@@ -145,6 +194,7 @@ sleep 15
 # Test application
 info "Testando aplicação..."
 for i in {1..10}; do
+    sleep 3
     if curl -f -s http://localhost:3000 > /dev/null 2>&1; then
         log "Aplicação respondendo"
         break
@@ -155,12 +205,11 @@ for i in {1..10}; do
         exit 1
     else
         warn "Tentativa $i/10 - Aguardando..."
-        sleep 3
     fi
 done
 
 # Get public IP
-PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "localhost")
+PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || curl -s icanhazip.com 2>/dev/null || echo "localhost")
 
 # Success message
 echo

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de deploy otimizado para VPS
+# Script de deploy otimizado para VPS - Fixed for minimal systems
 # Uso: ./deploy.sh
 
 set -e
@@ -39,18 +39,28 @@ echo
 # Verificar pré-requisitos
 info "Verificando pré-requisitos..."
 
-if ! command -v docker &> /dev/null; then
+if ! which docker > /dev/null 2>&1; then
     error "Docker não está instalado!"
     echo "Instale com: curl -fsSL https://get.docker.com | sh"
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! which docker-compose > /dev/null 2>&1; then
     error "Docker Compose não está instalado!"
+    echo "Tentando usar docker compose plugin..."
+    if which docker > /dev/null 2>&1 && docker compose version > /dev/null 2>&1; then
+        # Create alias for docker-compose
+        echo '#!/bin/bash' > /usr/local/bin/docker-compose
+        echo 'docker compose "$@"' >> /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        log "Docker Compose plugin configurado"
+    else
+        exit 1
+    fi
     exit 1
 fi
 
-if ! command -v npm &> /dev/null; then
+if ! which npm > /dev/null 2>&1; then
     error "Node.js/NPM não está instalado!"
     exit 1
 fi
@@ -101,7 +111,12 @@ docker-compose up -d --build
 
 # Aguardar containers iniciarem
 info "Aguardando containers iniciarem..."
-sleep 10
+for i in {1..10}; do
+    sleep 1
+    if docker-compose ps | grep -q "Up"; then
+        break
+    fi
+done
 
 # Verificar se containers estão rodando
 info "Verificando status dos containers..."
@@ -117,7 +132,11 @@ log "Containers rodando"
 # Testar aplicação
 info "Testando aplicação..."
 for i in {1..5}; do
+    sleep 5
     if curl -f -s http://localhost:3000/health > /dev/null 2>&1; then
+        log "Aplicação respondendo"
+        break
+    elif curl -f -s http://localhost:3000 > /dev/null 2>&1; then
         log "Aplicação respondendo"
         break
     elif [ $i -eq 5 ]; then
@@ -127,7 +146,6 @@ for i in {1..5}; do
         exit 1
     else
         warn "Tentativa $i/5 - Aguardando aplicação..."
-        sleep 5
     fi
 done
 
