@@ -238,7 +238,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   })) : [];
 
   // Sempre incluir o botão de configuração
-  const configButton = {
+  const configButton = profile?.is_master ? {
     id: 'configuracao',
     name: 'Configuração',
     description: 'Configurações do sistema',
@@ -248,12 +248,12 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     url: '#',
     hasAccess: true,
     isActive: true
-  };
+  } : null;
 
   // Se há botões customizados, usar eles + configuração, senão usar padrões
   const apps = customButtons.length > 0 
-    ? [...customApps, configButton]
-    : defaultApps;
+    ? [...customApps, ...(configButton ? [configButton] : [])]
+    : profile?.is_master ? defaultApps : defaultApps.filter(app => app.id !== 'configuracao');
 
   const handleAppClick = (app: any) => {
     console.log('🔄 Clicou no app:', app.id, app.name);
