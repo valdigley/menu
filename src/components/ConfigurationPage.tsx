@@ -124,15 +124,62 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     try {
       // Primeiro tentar carregar do Supabase
       if (supabase && user) {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('user_settings')
           .select('settings')
           .eq('user_id', user.id)
-          .single();
+          .limit(1);
 
-        // Se não há erro ou se o erro é apenas "nenhuma linha encontrada"
-        if (!error || (error.code === 'PGRST116' && error.details === 'The result contains 0 rows')) {
-          if (data && data.settings) {
+        // Se há dados retornados
+        if (data && data.length > 0 && data[0].settings) {
+          setSettings(prev => ({
+            ...prev,
+            ...data[0].settings,
+            appearance: {
+              ...prev.appearance,
+              ...data[0].settings.appearance,
+              buttons: data[0].settings.appearance?.buttons || defaultButtons
+            }
+          }));
+          return;
+        }
+      }
+
+      // Fallback para localStorage
+      const savedSettings = localStorage.getItem('systemSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          setSettings(prev => ({
+            ...prev,
+            ...parsedSettings,
+            appearance: {
+              ...prev.appearance,
+              ...parsedSettings.appearance,
+              buttons: parsedSettings.appearance?.buttons || defaultButtons
+            }
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar configurações do localStorage:', error);
+          setSettings(prev => ({
+            ...prev,
+            appearance: { ...prev.appearance, buttons: defaultButtons }
+          }));
+        }
+      } else {
+        setSettings(prev => ({
+          ...prev,
+          appearance: { ...prev.appearance, buttons: defaultButtons }
+        }));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+      setSettings(prev => ({
+        ...prev,
+        appearance: { ...prev.appearance, buttons: defaultButtons }
+      }));
+    }
+  };
             setSettings(prev => ({
               ...prev,
               ...data.settings,

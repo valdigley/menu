@@ -37,18 +37,49 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     try {
       // Tentar carregar do Supabase primeiro
       if (supabase && user) {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('user_settings')
           .select('settings')
           .eq('user_id', user.id)
-          .single();
+          .limit(1);
 
-        // Se não há erro ou se o erro é apenas "nenhuma linha encontrada"
-        if (!error || (error.code === 'PGRST116' && error.details === 'The result contains 0 rows')) {
-          if (data && data.settings) {
-            if (data.settings.appearance) {
-              setWallpaperSettings(data.settings.appearance);
-              if (data.settings.appearance.buttons) {
+        // Se há dados retornados
+        if (data && data.length > 0 && data[0].settings) {
+          if (data[0].settings.appearance) {
+            setWallpaperSettings(data[0].settings.appearance);
+            if (data[0].settings.appearance.buttons) {
+              const validButtons = data[0].settings.appearance.buttons.filter(
+                (button: any) => button && button.id && button.name
+              );
+              setCustomButtons(validButtons);
+            }
+          }
+          return;
+        }
+      }
+
+      // Fallback para localStorage
+      const savedSettings = localStorage.getItem('systemSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          if (parsedSettings.appearance) {
+            setWallpaperSettings(parsedSettings.appearance);
+            if (parsedSettings.appearance.buttons) {
+              const validButtons = parsedSettings.appearance.buttons.filter(
+                (button: any) => button && button.id && button.name
+              );
+              setCustomButtons(validButtons);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao carregar configurações:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações do usuário:', error);
+    }
+  };
                 const validButtons = data.settings.appearance.buttons.filter(
                   (button: any) => button && button.id && button.name
                 );
