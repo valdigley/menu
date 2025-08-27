@@ -7,8 +7,6 @@ services:
       - "3002:80"
     environment:
       - NODE_ENV=production
-    volumes:
-      - ./dist:/usr/share/nginx/html:ro
     restart: unless-stopped
     networks:
       - app-network
