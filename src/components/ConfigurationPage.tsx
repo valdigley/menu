@@ -195,6 +195,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
             user_id: user.id,
             settings: settings,
             updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
           });
 
         if (error) {
