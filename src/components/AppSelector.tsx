@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, LogOut, User } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Settings } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
+import ConfigurationPage from './ConfigurationPage';
 
 interface AppSelectorProps {
   user: any;
@@ -14,6 +15,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [loading, setLoading] = useState(true);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
+  const [showConfiguration, setShowConfiguration] = useState(false);
 
   useEffect(() => {
     // Detectar tema do sistema
@@ -192,6 +194,17 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       url: 'https://obrigacoes.exemplo.com',
       hasAccess: hasSystemAccess('obrigacoes'),
       isActive: true
+    },
+    {
+      id: 'configuracao',
+      name: 'Configuração',
+      description: 'Configurações do sistema',
+      icon: 'Settings',
+      color: 'gray',
+      backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
+      url: '#',
+      hasAccess: true,
+      isActive: true
     }
   ];
 
@@ -211,6 +224,12 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const apps = [...customApps];
 
   const handleAppClick = (app: typeof apps[0]) => {
+    // Se for configuração, mostrar modal interno
+    if (app.id === 'configuracao') {
+      setShowConfiguration(true);
+      return;
+    }
+    
     // Verificar se o sistema está desabilitado ou sem acesso
     if (app.isActive === false || !app.hasAccess) {
       return; // Não faz nada, sem mensagens
@@ -219,6 +238,34 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Abrir link externo
     window.open(app.url, '_blank');
   };
+
+  const handleSettingsChange = (settings: any) => {
+    // Atualizar configurações locais
+    localStorage.setItem('systemSettings', JSON.stringify(settings));
+    
+    // Recarregar configurações
+    if (settings.appearance) {
+      setWallpaperSettings(settings.appearance);
+      if (settings.appearance.buttons) {
+        const validButtons = settings.appearance.buttons.filter(
+          (button: any) => button && button.id && button.name
+        );
+        setCustomButtons(validButtons);
+      }
+    }
+  };
+
+  // Se está mostrando configurações, renderizar o componente
+  if (showConfiguration) {
+    return (
+      <ConfigurationPage
+        user={user}
+        supabase={supabase}
+        onBack={() => setShowConfiguration(false)}
+        onSettingsChange={handleSettingsChange}
+      />
+    );
+  }
 
   if (loading) {
     return (
