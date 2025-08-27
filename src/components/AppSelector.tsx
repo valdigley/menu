@@ -68,7 +68,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       if (savedSettings) {
         try {
           const parsedSettings = JSON.parse(savedSettings);
-          if (data.settings.appearance) {
+          if (parsedSettings.appearance) {
             setWallpaperSettings(parsedSettings.appearance);
             if (parsedSettings.appearance.buttons) {
               const validButtons = parsedSettings.appearance.buttons.filter(
