@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut, User, Settings } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
 import ConfigurationPage from './ConfigurationPage';
+import ConfigurationPage from './ConfigurationPage';
 
 interface AppSelectorProps {
   user: any;
