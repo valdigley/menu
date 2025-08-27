@@ -8,11 +8,13 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "./deploy.sh",
-    "docker:build": "docker-compose build",
+    "deploy:vps": "./deploy.sh",
+    "docker:build": "docker-compose build --no-cache",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:down": "docker-compose down --remove-orphans",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:clean": "docker system prune -f"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

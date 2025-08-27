@@ -1,34 +1,47 @@
 #!/bin/bash
 
-# Script de deploy para VPS
+# Script de deploy otimizado para VPS
 # Uso: ./deploy.sh
 
 set -e
-
-echo "🚀 Iniciando deploy na VPS..."
 
 # Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Função para log colorido
 log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] ✅ $1${NC}"
 }
 
 warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️  $1${NC}"
 }
 
 error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ❌ $1${NC}"
 }
 
-# Verificar se Docker está instalado
+info() {
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')] ℹ️  $1${NC}"
+}
+
+# Banner
+echo -e "${BLUE}"
+echo "🚀 =================================="
+echo "   DEPLOY FERRAMENTAS FOTÓGRAFOS"
+echo "==================================${NC}"
+echo
+
+# Verificar pré-requisitos
+info "Verificando pré-requisitos..."
+
 if ! command -v docker &> /dev/null; then
     error "Docker não está instalado!"
+    echo "Instale com: curl -fsSL https://get.docker.com | sh"
     exit 1
 fi
 
@@ -37,50 +50,105 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-# Verificar se arquivo .env existe
-if [ ! -f .env.production ]; then
-    warn "Arquivo .env.production não encontrado!"
-    warn "Criando arquivo de exemplo..."
-    cp .env.production.example .env.production 2>/dev/null || true
-    error "Configure o arquivo .env.production com suas credenciais do Supabase"
+if ! command -v npm &> /dev/null; then
+    error "Node.js/NPM não está instalado!"
     exit 1
 fi
 
+log "Pré-requisitos OK"
+
+# Verificar arquivo .env
+if [ ! -f .env.production ]; then
+    warn "Arquivo .env.production não encontrado!"
+    error "Configure suas credenciais do Supabase no arquivo .env.production"
+    exit 1
+fi
+
+# Verificar se as variáveis estão configuradas
+if grep -q "seu-projeto.supabase.co" .env.production; then
+    warn "Configure suas credenciais reais do Supabase no .env.production"
+    exit 1
+fi
+
+log "Configurações OK"
+
+# Instalar dependências
+info "Instalando dependências..."
+npm ci --silent
+
 # Build da aplicação
-log "📦 Fazendo build da aplicação..."
+info "Fazendo build da aplicação..."
 npm run build
 
-# Parar containers existentes
-log "🛑 Parando containers existentes..."
-docker-compose down --remove-orphans || true
+if [ ! -d "dist" ]; then
+    error "Build falhou - diretório dist não encontrado"
+    exit 1
+fi
 
-# Remover imagens antigas
-log "🧹 Limpando imagens antigas..."
-docker image prune -f || true
+log "Build concluído"
+
+# Parar containers existentes
+info "Parando containers existentes..."
+docker-compose down --remove-orphans 2>/dev/null || true
+
+# Limpar recursos antigos
+info "Limpando recursos antigos..."
+docker system prune -f --volumes 2>/dev/null || true
 
 # Build e start dos containers
-log "🔨 Construindo e iniciando containers..."
+info "Construindo e iniciando containers..."
 docker-compose up -d --build
 
+# Aguardar containers iniciarem
+info "Aguardando containers iniciarem..."
+sleep 10
+
 # Verificar se containers estão rodando
-log "✅ Verificando status dos containers..."
-docker-compose ps
-
-# Aguardar alguns segundos
-sleep 5
-
-# Testar se aplicação está respondendo
-log "🔍 Testando aplicação..."
-if curl -f http://localhost:80 > /dev/null 2>&1; then
-    log "✅ Aplicação está rodando em http://localhost"
-else
-    error "❌ Aplicação não está respondendo"
-    log "📋 Logs do container:"
+info "Verificando status dos containers..."
+if ! docker-compose ps | grep -q "Up"; then
+    error "Containers não estão rodando!"
+    echo "Logs dos containers:"
     docker-compose logs --tail=20
     exit 1
 fi
 
-log "🎉 Deploy concluído com sucesso!"
-log "📱 Aplicação disponível em: http://seu-servidor"
-log "📊 Para ver logs: docker-compose logs -f"
-log "🛑 Para parar: docker-compose down"
+log "Containers rodando"
+
+# Testar aplicação
+info "Testando aplicação..."
+for i in {1..5}; do
+    if curl -f -s http://localhost:3000/health > /dev/null 2>&1; then
+        log "Aplicação respondendo"
+        break
+    elif [ $i -eq 5 ]; then
+        error "Aplicação não está respondendo após 5 tentativas"
+        echo "Logs da aplicação:"
+        docker-compose logs --tail=30
+        exit 1
+    else
+        warn "Tentativa $i/5 - Aguardando aplicação..."
+        sleep 5
+    fi
+done
+
+# Informações finais
+echo
+echo -e "${GREEN}🎉 =================================="
+echo "      DEPLOY CONCLUÍDO COM SUCESSO!"
+echo "====================================${NC}"
+echo
+echo -e "${BLUE}📱 Aplicação disponível em:${NC}"
+echo "   • Local: http://localhost:3000"
+echo "   • Rede: http://$(hostname -I | awk '{print $1}'):3000"
+echo
+echo -e "${BLUE}🛠️  Comandos úteis:${NC}"
+echo "   • Ver logs: docker-compose logs -f"
+echo "   • Parar: docker-compose down"
+echo "   • Reiniciar: docker-compose restart"
+echo "   • Status: docker-compose ps"
+echo
+echo -e "${BLUE}📊 Status dos containers:${NC}"
+docker-compose ps
+echo
+
+log "Deploy finalizado!"
