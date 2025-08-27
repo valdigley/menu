@@ -130,17 +130,23 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
           .eq('user_id', user.id)
           .single();
 
-        if (data && data.settings) {
-          setSettings(prev => ({
-            ...prev,
-            ...data.settings,
-            appearance: {
-              ...prev.appearance,
-              ...data.settings.appearance,
-              buttons: data.settings.appearance?.buttons || defaultButtons
-            }
-          }));
-          return;
+        // Se não há erro ou se o erro é apenas "nenhuma linha encontrada"
+        if (!error || (error.code === 'PGRST116' && error.details === 'The result contains 0 rows')) {
+          if (data && data.settings) {
+            setSettings(prev => ({
+              ...prev,
+              ...data.settings,
+              appearance: {
+                ...prev.appearance,
+                ...data.settings.appearance,
+                buttons: data.settings.appearance?.buttons || defaultButtons
+              }
+            }));
+            return;
+          }
+        } else {
+          // Se há um erro real (não apenas "sem dados"), logar
+          console.error('Erro ao carregar configurações do Supabase:', error);
         }
       }
 

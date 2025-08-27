@@ -43,17 +43,23 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           .eq('user_id', user.id)
           .single();
 
-        if (data && data.settings) {
-          if (data.settings.appearance) {
-            setWallpaperSettings(data.settings.appearance);
-            if (data.settings.appearance.buttons) {
-              const validButtons = data.settings.appearance.buttons.filter(
-                (button: any) => button && button.id && button.name
-              );
-              setCustomButtons(validButtons);
+        // Se não há erro ou se o erro é apenas "nenhuma linha encontrada"
+        if (!error || (error.code === 'PGRST116' && error.details === 'The result contains 0 rows')) {
+          if (data && data.settings) {
+            if (data.settings.appearance) {
+              setWallpaperSettings(data.settings.appearance);
+              if (data.settings.appearance.buttons) {
+                const validButtons = data.settings.appearance.buttons.filter(
+                  (button: any) => button && button.id && button.name
+                );
+                setCustomButtons(validButtons);
+              }
             }
+            return;
           }
-          return;
+        } else {
+          // Se há um erro real (não apenas "sem dados"), logar
+          console.error('Erro ao carregar configurações do Supabase:', error);
         }
       }
 
@@ -62,7 +68,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       if (savedSettings) {
         try {
           const parsedSettings = JSON.parse(savedSettings);
-          if (parsedSettings.appearance) {
+          if (data.settings.appearance) {
             setWallpaperSettings(parsedSettings.appearance);
             if (parsedSettings.appearance.buttons) {
               const validButtons = parsedSettings.appearance.buttons.filter(
