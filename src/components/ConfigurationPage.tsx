@@ -3,6 +3,7 @@ import { ArrowLeft, Save, Upload, X, Plus, Edit, Trash2, Palette, ExternalLink, 
 import { motion } from 'framer-motion';
 import { getIconComponent } from '../utils/icons';
 import { SSOManager } from '../utils/sso';
+import UserManagement from './UserManagement';
 
 interface ConfigurationPageProps {
   user: any;
@@ -47,6 +48,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
   const [showAddButton, setShowAddButton] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState('');
+  const [showUserManagement, setShowUserManagement] = useState(false);
 
   // Botões padrão
   const defaultButtons: ButtonConfig[] = [
@@ -101,7 +103,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
   const availableIcons = [
     'Heart', 'DollarSign', 'FileText', 'Zap', 'CheckSquare', 'Settings', 'User', 'Calendar',
     'Camera', 'Image', 'Mail', 'Phone', 'Star', 'Award', 'Target', 'Shield', 'Lock',
-    'Database', 'Server', 'Cloud', 'Activity', 'BarChart', 'TrendingUp', 'Search'
+    'Database', 'Server', 'Cloud', 'Activity', 'BarChart', 'TrendingUp', 'Search',
     'Bookmark', 'BookOpen', 'Coffee', 'Gift', 'Headphones', 'Mic', 'Monitor',
     'Printer', 'Smartphone', 'Tablet', 'Watch', 'Globe', 'Link', 'Share', 'Tag',
     'Folder', 'Archive', 'Clipboard', 'Edit', 'Plus', 'Minus', 'X', 'Check',
@@ -331,6 +333,17 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
     }
   };
 
+  // Se está mostrando gerenciamento de usuários
+  if (showUserManagement) {
+    return (
+      <UserManagement
+        user={user}
+        supabase={supabase}
+        onBack={() => setShowUserManagement(false)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -357,6 +370,15 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
             </div>
             
             <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowUserManagement(true)}
+                className="px-4 py-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+              >
+                Gerenciar Usuários
+              </motion.button>
+              
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
