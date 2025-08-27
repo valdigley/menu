@@ -50,11 +50,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ user, supabase, onBack 
     try {
       setLoading(true);
       
-      // Buscar usuários do auth
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      // Buscar usuários da tabela users (pública)
+      const { data: publicUsers, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (authError) {
-        console.error('Erro ao carregar usuários:', authError);
+      if (usersError) {
+        console.error('Erro ao carregar usuários:', usersError);
         return;
       }
 
@@ -69,16 +72,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ user, supabase, onBack 
         .select('*');
 
       // Combinar dados
-      const usersWithData = authUsers.users.map((authUser: any) => {
-        const subscription = subscriptions?.find(sub => sub.user_id === authUser.id);
-        const access = systemAccess?.filter(acc => acc.user_id === authUser.id);
+      const usersWithData = (publicUsers || []).map((publicUser: any) => {
+        const subscription = subscriptions?.find(sub => sub.user_id === publicUser.id);
+        const access = systemAccess?.filter(acc => acc.user_id === publicUser.id);
         
         return {
-          id: authUser.id,
-          email: authUser.email,
-          name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email,
-          created_at: authUser.created_at,
-          last_sign_in_at: authUser.last_sign_in_at,
+          id: publicUser.id,
+          email: publicUser.email,
+          name: publicUser.name,
+          created_at: publicUser.created_at,
+          last_sign_in_at: null, // Não disponível na tabela users
           subscription,
           system_access: {
             photography_tasks: access?.some(a => a.system_id === 'photography_tasks' && a.has_access),
@@ -193,8 +196,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ user, supabase, onBack 
     }
 
     try {
-      // Deletar do auth (isso vai cascatear para outras tabelas)
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // Deletar da tabela users (isso vai cascatear para outras tabelas devido ao FK)
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
       
       if (error) throw error;
       
@@ -367,7 +373,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user, supabase, onBack 
                       </td>
                       
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {userData.last_sign_in_at ? formatDate(userData.last_sign_in_at) : 'Nunca'}
+                        {userData.last_sign_in_at ? formatDate(userData.last_sign_in_at) : 'N/A'}
                       </td>
                       
                       <td className="px-6 py-4 text-right">
