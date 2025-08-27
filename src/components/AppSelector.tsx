@@ -120,53 +120,53 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   // Botões padrão
   const defaultApps = [
     {
-      id: 'triagem',
-      name: 'Triagem',
-      description: 'Sistema de triagem médica',
+      id: 'fotografias',
+      name: 'Fotografias',
+      description: 'Gerenciar fotografias',
       icon: 'Heart',
       color: 'green',
       backgroundImage: 'https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://triagem.exemplo.com',
+      url: 'https://fotografias.exemplo.com',
       isActive: true
     },
     {
-      id: 'grana',
-      name: 'Grana',
-      description: 'Sistema financeiro',
+      id: 'financeiro',
+      name: 'Financeiro',
+      description: 'Gestão financeira',
       icon: 'DollarSign',
       color: 'yellow',
       backgroundImage: 'https://images.pexels.com/photos/259027/pexels-photo-259027.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://grana.exemplo.com',
-      isActive: false
-    },
-    {
-      id: 'contrato',
-      name: 'Contratos',
-      description: 'Sistema de contratos',
-      icon: 'FileText',
-      color: 'blue',
-      backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://contratos.exemplo.com',
+      url: 'https://financeiro.exemplo.com',
       isActive: true
     },
     {
-      id: 'automacao',
-      name: 'Automação',
-      description: 'Sistema de automação',
+      id: 'clientes',
+      name: 'Clientes',
+      description: 'Gestão de clientes',
+      icon: 'FileText',
+      color: 'blue',
+      backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
+      url: 'https://clientes.exemplo.com',
+      isActive: true
+    },
+    {
+      id: 'agenda',
+      name: 'Agenda',
+      description: 'Agendamento de sessões',
       icon: 'Zap',
       color: 'purple',
       backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://automacao.exemplo.com',
-      isActive: false
+      url: 'https://agenda.exemplo.com',
+      isActive: true
     },
     {
-      id: 'obrigacoes',
-      name: 'Obrigações',
-      description: 'Gestão de tarefas diárias',
+      id: 'portfolio',
+      name: 'Portfólio',
+      description: 'Galeria de trabalhos',
       icon: 'CheckSquare',
       color: 'orange',
       backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://obrigacoes.exemplo.com',
+      url: 'https://portfolio.exemplo.com',
       isActive: true
     }
   ];

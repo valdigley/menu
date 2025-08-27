@@ -51,24 +51,18 @@ function App() {
 
   // Se estiver na rota do formulário de cliente, mostrar sem autenticação
   if (location.pathname === '/formulario-cliente') {
-    const loadCompanySettings = () => {
-      try {
-        const savedSettings = localStorage.getItem('systemSettings');
-        if (savedSettings) {
-          return JSON.parse(savedSettings);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
-      }
-      return {
-        company: {
-          name: 'Fotografia Profissional',
-          owner: 'Fotógrafo'
-        }
-      };
-    };
-
-    return <ClientForm companySettings={loadCompanySettings()} />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Formulário de Cliente
+          </h2>
+          <p className="text-gray-600">
+            Esta funcionalidade será implementada em breve.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

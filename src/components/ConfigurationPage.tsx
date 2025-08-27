@@ -48,48 +48,48 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
   // Botões padrão
   const defaultButtons: ButtonConfig[] = [
     {
-      id: 'triagem',
-      name: 'Triagem',
+      id: 'fotografias',
+      name: 'Fotografias',
       icon: 'Heart',
       color: 'green',
       backgroundImage: 'https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://triagem.exemplo.com',
+      url: 'https://fotografias.exemplo.com',
       isActive: true
     },
     {
-      id: 'grana',
-      name: 'Grana',
+      id: 'financeiro',
+      name: 'Financeiro',
       icon: 'DollarSign',
       color: 'yellow',
       backgroundImage: 'https://images.pexels.com/photos/259027/pexels-photo-259027.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://grana.exemplo.com',
+      url: 'https://financeiro.exemplo.com',
       isActive: true
     },
     {
-      id: 'contrato',
-      name: 'Contratos',
+      id: 'clientes',
+      name: 'Clientes',
       icon: 'FileText',
       color: 'blue',
       backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://contratos.exemplo.com',
+      url: 'https://clientes.exemplo.com',
       isActive: true
     },
     {
-      id: 'automacao',
-      name: 'Automação',
+      id: 'agenda',
+      name: 'Agenda',
       icon: 'Zap',
       color: 'purple',
       backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://automacao.exemplo.com',
+      url: 'https://agenda.exemplo.com',
       isActive: true
     },
     {
-      id: 'obrigacoes',
-      name: 'Obrigações',
+      id: 'portfolio',
+      name: 'Portfólio',
       icon: 'CheckSquare',
       color: 'orange',
       backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'https://obrigacoes.exemplo.com',
+      url: 'https://portfolio.exemplo.com',
       isActive: true
     }
   ];
