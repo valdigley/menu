@@ -37,7 +37,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     try {
       // Tentar carregar do Supabase primeiro
       if (supabase && user) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('user_settings')
           .select('settings')
           .eq('user_id', user.id)
@@ -55,42 +55,11 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
             }
           }
           return;
-        }
-      }
-
-      // Fallback para localStorage
-      const savedSettings = localStorage.getItem('systemSettings');
-      if (savedSettings) {
-        try {
-          const parsedSettings = JSON.parse(savedSettings);
-          if (parsedSettings.appearance) {
-            setWallpaperSettings(parsedSettings.appearance);
-            if (parsedSettings.appearance.buttons) {
-              const validButtons = parsedSettings.appearance.buttons.filter(
-                (button: any) => button && button.id && button.name
-              );
-              setCustomButtons(validButtons);
-            }
-          }
-        } catch (error) {
-          console.error('Erro ao carregar configurações:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configurações do usuário:', error);
-    }
-  };
-                const validButtons = data.settings.appearance.buttons.filter(
-                  (button: any) => button && button.id && button.name
-                );
-                setCustomButtons(validButtons);
-              }
-            }
-            return;
-          }
         } else {
           // Se há um erro real (não apenas "sem dados"), logar
-          console.error('Erro ao carregar configurações do Supabase:', error);
+          if (error) {
+            console.error('Erro ao carregar configurações do Supabase:', error);
+          }
         }
       }
 
@@ -114,6 +83,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       }
     } catch (error) {
       console.error('Erro ao carregar configurações do usuário:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
