@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut, User } from 'lucide-react';
-import ConfigurationPage from './ConfigurationPage';
-import UserManagement from './UserManagement';
-import SimpleTaskList from './SimpleTaskList';
-import ContractIntegration from './ContractIntegration';
-import ContractSystem from './ContractSystem';
 import { getIconComponent } from '../utils/icons';
-import { SSOManager } from '../utils/sso';
 
 interface AppSelectorProps {
   user: any;
@@ -18,14 +12,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [profile, setProfile] = useState<any>(null);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showConfiguration, setShowConfiguration] = useState(false);
-  const [showUserManagement, setShowUserManagement] = useState(false);
-  const [showTaskList, setShowTaskList] = useState(false);
-  const [showContractIntegration, setShowContractIntegration] = useState(false);
-  const [showContractSystem, setShowContractSystem] = useState(false);
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
-  const [systemAccess, setSystemAccess] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     // Detectar tema do sistema
@@ -63,34 +51,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   useEffect(() => {
     if (user) {
       loadUserData();
-      loadSystemAccess();
     }
   }, [user]);
-
-  const loadSystemAccess = async () => {
-    if (!supabase || !user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_system_access')
-        .select('system_id, has_access')
-        .eq('user_id', user.id);
-      
-      if (error && error.code !== 'PGRST116') {
-        console.warn('Erro ao carregar acessos específicos:', error);
-        return;
-      }
-      
-      const accessMap: {[key: string]: boolean} = {};
-      data?.forEach(access => {
-        accessMap[access.system_id] = access.has_access;
-      });
-      
-      setSystemAccess(accessMap);
-    } catch (error) {
-      console.warn('Erro ao carregar acessos específicos:', error);
-    }
-  };
 
   const loadUserData = async () => {
     try {
@@ -149,103 +111,13 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Master tem acesso a tudo
     if (profile.is_master) return true;
     
-    // Sistemas exclusivos do master
-    if (systemId === 'admin' || systemId === 'configuracao') {
-      return false; // Apenas master pode acessar
-    }
-    
     // Verificar se tem assinatura ativa geral
-    const hasGeneralAccess = subscriptions.some(sub => 
+    return subscriptions.some(sub => 
       sub.manual_access === true ||
       (
         sub.status === 'active' && 
         (sub.plan_type === 'paid' || sub.plan_type === 'trial') &&
         (!sub.expires_at || new Date(sub.expires_at) > new Date())
-      )
-    );
-    
-    // Se não tem acesso geral, não pode acessar nenhum sistema
-    if (!hasGeneralAccess) return false;
-    
-    // Por enquanto, se tem assinatura ativa, tem acesso a todos os sistemas
-    // TODO: Implementar verificação específica por sistema via user_system_access
-    return hasGeneralAccess;
-  };
-
-  const checkSpecificSystemAccess = async (systemId: string): Promise<boolean> => {
-    if (!profile || !supabase) return false;
-    
-    // Master tem acesso a tudo
-    if (profile.is_master) return true;
-    
-    // Sistemas exclusivos do master
-    if (systemId === 'admin' || systemId === 'configuracao') {
-      return false; // Apenas master pode acessar
-    }
-    
-    try {
-      // Primeiro verificar se tem assinatura ativa geral
-      const hasGeneralAccess = subscriptions.some(sub => 
-        sub.manual_access === true ||
-        (
-          sub.status === 'active' && 
-          (sub.plan_type === 'paid' || sub.plan_type === 'trial') &&
-          (!sub.expires_at || new Date(sub.expires_at) > new Date())
-        )
-      );
-      
-      // Se não tem acesso geral, não pode acessar nenhum sistema
-      if (!hasGeneralAccess) return false;
-      
-      // Verificar acesso específico ao sistema
-      const { data, error } = await supabase
-        .from('user_system_access')
-        .select('has_access, expires_at')
-        .eq('user_id', profile.id)
-        .eq('system_id', systemId)
-        .maybeSingle();
-      
-      if (error) {
-        console.warn('Erro ao verificar acesso específico:', error);
-        return true; // Fallback para permitir acesso
-      }
-      
-      // Se não existe registro (data é null), por padrão tem acesso (para compatibilidade)
-      if (!data) {
-        return true;
-      }
-      
-      // Verificar se o acesso não expirou
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        return false;
-      }
-      
-      return data.has_access || false;
-    } catch (error) {
-      console.warn('Erro ao verificar acesso específico:', error);
-      return true; // Fallback para permitir acesso em caso de erro
-    }
-  };
-
-  // Função auxiliar para verificação básica (mantém compatibilidade)
-  const hasBasicSystemAccess = (systemId: string): boolean => {
-    if (!profile) return false;
-    
-    // Master tem acesso a tudo
-    if (profile.is_master) return true;
-    
-    // Sistemas exclusivos do master
-    if (systemId === 'admin' || systemId === 'configuracao') {
-      return false; // Apenas master pode acessar
-    }
-    
-    // Verificar se tem assinatura ativa geral
-    return subscriptions.some(sub => 
-      sub.manual_access === true ||
-      (
-      sub.status === 'active' && 
-      (sub.plan_type === 'paid' || sub.plan_type === 'trial') &&
-      (!sub.expires_at || new Date(sub.expires_at) > new Date())
       )
     );
   };
@@ -274,7 +146,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'green',
       backgroundImage: 'https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://triagem.exemplo.com',
-      hasAccess: hasBasicSystemAccess('triagem'),
+      hasAccess: hasSystemAccess('triagem'),
       isActive: true
     },
     {
@@ -285,7 +157,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'yellow',
       backgroundImage: 'https://images.pexels.com/photos/259027/pexels-photo-259027.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://grana.exemplo.com',
-      hasAccess: hasBasicSystemAccess('grana'),
+      hasAccess: hasSystemAccess('grana'),
       isActive: false
     },
     {
@@ -295,8 +167,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       icon: 'FileText',
       color: 'blue',
       backgroundImage: 'https://images.pexels.com/photos/4427430/pexels-photo-4427430.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'internal:contratos',
-      hasAccess: hasBasicSystemAccess('contrato'),
+      url: 'https://contratos.exemplo.com',
+      hasAccess: hasSystemAccess('contrato'),
       isActive: true
     },
     {
@@ -307,18 +179,18 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       color: 'purple',
       backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://automacao.exemplo.com',
-      hasAccess: hasBasicSystemAccess('automacao'),
+      hasAccess: hasSystemAccess('automacao'),
       isActive: false
     },
     {
       id: 'obrigacoes',
       name: 'Obrigações',
-      description: 'Gestão de tarefas diárias de edição',
+      description: 'Gestão de tarefas diárias',
       icon: 'CheckSquare',
       color: 'orange',
       backgroundImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'internal:obrigacoes',
-      hasAccess: hasBasicSystemAccess('obrigacoes'),
+      url: 'https://obrigacoes.exemplo.com',
+      hasAccess: hasSystemAccess('obrigacoes'),
       isActive: true
     }
   ];
@@ -332,82 +204,13 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     color: button.color,
     backgroundImage: button.backgroundImage,
     url: button.url,
-    hasAccess: true, // Sempre true para não afetar o visual, controle real é feito no clique
+    hasAccess: true, // Sempre true para não afetar o visual
     isActive: button.isActive !== false
   })) : defaultApps;
 
   const apps = [...customApps];
 
-  // Adicionar botões exclusivos para masters
-  if (profile?.is_master) {
-    apps.push({
-      id: 'admin',
-      name: 'Gerenciar',
-      description: 'Gerenciar assinaturas e usuários',
-      icon: 'Users',
-      color: 'red',
-      backgroundImage: 'https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: '/admin',
-      hasAccess: true,
-      isActive: true
-    });
-    
-    // Configuração deve ser o último botão
-    apps.push({
-      id: 'configuracao',
-      name: 'Configuração',
-      description: 'Configurações do sistema',
-      icon: 'Settings',
-      color: 'gray',
-      backgroundImage: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800',
-      url: 'internal:configuracao',
-      hasAccess: true,
-      isActive: true
-    });
-  }
-
   const handleAppClick = (app: typeof apps[0]) => {
-    // Prevenir múltiplas execuções
-    if (app.isProcessing) return;
-    
-    // Master sempre tem acesso a tudo
-    if (profile?.is_master) {
-      // Verificar URLs internas para master
-      if (app.url === 'internal:configuracao' || app.id === 'configuracao') {
-        setShowConfiguration(true);
-        return;
-      }
-      
-      if (app.id === 'admin') {
-        setShowUserManagement(true);
-        return;
-      }
-      
-      if (app.url === 'internal:obrigacoes' || app.id === 'obrigacoes') {
-        setShowTaskList(true);
-        return;
-      }
-      
-      if (app.url === 'internal:contratos' || app.id === 'contrato') {
-        setShowContractSystem(true);
-        return;
-      }
-      
-      window.open(app.url, '_blank');
-      return;
-    }
-    
-    // Verificar URLs internas PRIMEIRO para usuários normais
-    if (app.url === 'internal:obrigacoes' || app.id === 'obrigacoes') {
-      setShowTaskList(true);
-      return;
-    }
-    
-    if (app.url === 'internal:contratos' || app.id === 'contrato') {
-      setShowContractSystem(true);
-      return;
-    }
-    
     // Verificar se o sistema está desabilitado ou sem acesso
     if (app.isActive === false || !app.hasAccess) {
       return; // Não faz nada, sem mensagens
@@ -422,61 +225,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
-    );
-  }
-
-  if (showConfiguration) {
-    return (
-      <ConfigurationPage
-        user={user}
-        supabase={supabase}
-        onBack={() => setShowConfiguration(false)}
-        onSettingsChange={(settings) => {
-          setWallpaperSettings(settings.appearance);
-          setCustomButtons(settings.appearance.buttons || []);
-          // As configurações já são salvas automaticamente no ConfigurationPage
-        }}
-      />
-    );
-  }
-
-  if (showTaskList) {
-    return (
-      <SimpleTaskList
-        user={user}
-        supabase={supabase}
-        onBack={() => setShowTaskList(false)}
-      />
-    );
-  }
-
-  if (showContractIntegration) {
-    return (
-      <ContractIntegration
-        user={user}
-        supabase={supabase}
-        onBack={() => setShowContractIntegration(false)}
-      />
-    );
-  }
-
-  if (showContractSystem) {
-    return (
-      <ContractSystem
-        user={user}
-        supabase={supabase}
-        onBack={() => setShowContractSystem(false)}
-      />
-    );
-  }
-
-  if (showUserManagement) {
-    return (
-      <UserManagement
-        user={user}
-        supabase={supabase}
-        onBack={() => setShowUserManagement(false)}
-      />
     );
   }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import LoginForm from './components/LoginForm';
 import AppSelector from './components/AppSelector';
@@ -99,15 +99,7 @@ function App() {
     return <LoginForm supabase={supabase} />;
   }
 
-  return (
-    <Routes>
-      <Route 
-        path="/" 
-        element={<AppSelector user={user} supabase={supabase} />} 
-      />
-      <Route path="*" element={<AppSelector user={user} supabase={supabase} />} />
-    </Routes>
-  );
+  return <AppSelector user={user} supabase={supabase} />;
 }
 
 export default App;
