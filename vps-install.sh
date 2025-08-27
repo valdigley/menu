@@ -15,7 +15,7 @@ NC='\033[0m'
 echo -e "${BLUE}"
 echo "🚀 =================================="
 echo "   INSTALAÇÃO MENU VALDIGLEY"
-echo "   VPS: 147.93.182.205"
+echo "   Domínio: fotografo.site"
 echo "==================================${NC}"
 echo
 

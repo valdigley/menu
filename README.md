@@ -23,7 +23,7 @@ sudo ./deploy.sh
 
 ## 🎯 Acesso
 
-- **URL:** `http://147.93.182.205:3000`
+- **URL:** `https://fotografo.site`
 - **Login Master:** `valdigley2007@gmail.com`
 - **Supabase:** https://iisejjtimakkwjrbmzvj.supabase.co
 

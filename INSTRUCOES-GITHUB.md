@@ -3,6 +3,7 @@
 ## 📋 DEPLOY VIA GITHUB
 
 ### **🎯 SEU IP:** 147.93.182.205
+### **🎯 SEU DOMÍNIO:** fotografo.site
 
 ---
 
