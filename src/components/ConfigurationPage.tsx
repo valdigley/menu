@@ -180,58 +180,6 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
       }));
     }
   };
-            setSettings(prev => ({
-              ...prev,
-              ...data.settings,
-              appearance: {
-                ...prev.appearance,
-                ...data.settings.appearance,
-                buttons: data.settings.appearance?.buttons || defaultButtons
-              }
-            }));
-            return;
-          }
-        } else {
-          // Se há um erro real (não apenas "sem dados"), logar
-          console.error('Erro ao carregar configurações do Supabase:', error);
-        }
-      }
-
-      // Fallback para localStorage
-      const savedSettings = localStorage.getItem('systemSettings');
-      if (savedSettings) {
-        try {
-          const parsedSettings = JSON.parse(savedSettings);
-          setSettings(prev => ({
-            ...prev,
-            ...parsedSettings,
-            appearance: {
-              ...prev.appearance,
-              ...parsedSettings.appearance,
-              buttons: parsedSettings.appearance?.buttons || defaultButtons
-            }
-          }));
-        } catch (error) {
-          console.error('Erro ao carregar configurações do localStorage:', error);
-          setSettings(prev => ({
-            ...prev,
-            appearance: { ...prev.appearance, buttons: defaultButtons }
-          }));
-        }
-      } else {
-        setSettings(prev => ({
-          ...prev,
-          appearance: { ...prev.appearance, buttons: defaultButtons }
-        }));
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-      setSettings(prev => ({
-        ...prev,
-        appearance: { ...prev.appearance, buttons: defaultButtons }
-      }));
-    }
-  };
 
   const saveSettings = async () => {
     setSaving(true);
