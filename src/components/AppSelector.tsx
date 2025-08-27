@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut, User, Settings } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
 import ConfigurationPage from './ConfigurationPage';
-import ConfigurationPage from './ConfigurationPage';
 
 interface AppSelectorProps {
   user: any;
@@ -139,13 +138,29 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     return gradients[color as keyof typeof gradients] || 'from-blue-500 to-indigo-600';
   };
 
+  const handleSettingsChange = (settings: any) => {
+    // Atualizar configurações locais
+    localStorage.setItem('systemSettings', JSON.stringify(settings));
+    
+    // Recarregar configurações
+    if (settings.appearance) {
+      setWallpaperSettings(settings.appearance);
+      if (settings.appearance.buttons) {
+        const validButtons = settings.appearance.buttons.filter(
+          (button: any) => button && button.id && button.name
+        );
+        setCustomButtons(validButtons);
+      }
+    }
+  };
+
   // Usar botões customizados se disponíveis, senão usar padrões
   const defaultApps = [
     {
       id: 'triagem',
       name: 'Triagem',
       description: 'Sistema de triagem médica',
-      icon: 'Image',
+      icon: 'Heart',
       color: 'green',
       backgroundImage: 'https://images.pexels.com/photos/4021775/pexels-photo-4021775.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://triagem.exemplo.com',
@@ -178,7 +193,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       id: 'automacao',
       name: 'Automação',
       description: 'Sistema de automação',
-      icon: 'Settings',
+      icon: 'Zap',
       color: 'purple',
       backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
       url: 'https://automacao.exemplo.com',
@@ -214,55 +229,64 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     id: button.id,
     name: button.name,
     description: `Sistema ${button.name}`,
-    icon: getIconComponent(button.icon),
+    icon: button.icon,
     color: button.color,
     backgroundImage: button.backgroundImage,
     url: button.url,
     hasAccess: true, // Sempre true para não afetar o visual
     isActive: button.isActive !== false
-  })) : defaultApps;
+  })) : [];
 
-  const apps = [...customApps];
+  // Sempre incluir o botão de configuração
+  const configButton = {
+    id: 'configuracao',
+    name: 'Configuração',
+    description: 'Configurações do sistema',
+    icon: 'Settings',
+    color: 'gray',
+    backgroundImage: 'https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=800',
+    url: '#',
+    hasAccess: true,
+    isActive: true
+  };
 
-  const handleAppClick = (app: typeof apps[0]) => {
+  // Se há botões customizados, usar eles + configuração, senão usar padrões
+  const apps = customButtons.length > 0 
+    ? [...customApps, configButton]
+    : defaultApps;
+
+  const handleAppClick = (app: any) => {
+    console.log('🔄 Clicou no app:', app.id, app.name);
+    
     // Se for configuração, mostrar modal interno
     if (app.id === 'configuracao') {
+      console.log('⚙️ Abrindo configurações...');
       setShowConfiguration(true);
       return;
     }
     
     // Verificar se o sistema está desabilitado ou sem acesso
     if (app.isActive === false || !app.hasAccess) {
+      console.log('❌ App desabilitado ou sem acesso');
       return; // Não faz nada, sem mensagens
     }
     
     // Abrir link externo
+    console.log('🔗 Abrindo link externo:', app.url);
     window.open(app.url, '_blank');
-  };
-
-  const handleSettingsChange = (settings: any) => {
-    // Atualizar configurações locais
-    localStorage.setItem('systemSettings', JSON.stringify(settings));
-    
-    // Recarregar configurações
-    if (settings.appearance) {
-      setWallpaperSettings(settings.appearance);
-      if (settings.appearance.buttons) {
-        const validButtons = settings.appearance.buttons.filter(
-          (button: any) => button && button.id && button.name
-        );
-        setCustomButtons(validButtons);
-      }
-    }
   };
 
   // Se está mostrando configurações, renderizar o componente
   if (showConfiguration) {
+    console.log('🎛️ Renderizando ConfigurationPage...');
     return (
       <ConfigurationPage
         user={user}
         supabase={supabase}
-        onBack={() => setShowConfiguration(false)}
+        onBack={() => {
+          console.log('⬅️ Voltando das configurações...');
+          setShowConfiguration(false);
+        }}
         onSettingsChange={handleSettingsChange}
       />
     );
@@ -295,6 +319,8 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`
     };
   };
+
+  console.log('🎯 Apps disponíveis:', apps.map(app => ({ id: app.id, name: app.name })));
 
   return (
     <div 
@@ -347,7 +373,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       <div className="w-full max-w-6xl mx-auto px-4 relative z-10">
         <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
           {apps.map((app) => {
-            const IconComponent = app.icon;
+            const IconComponent = getIconComponent(app.icon);
             const hasAccess = profile?.is_master ? true : hasSystemAccess(app.id);
             const isActive = app.isActive !== false;
             const isDisabled = profile?.is_master ? false : (!isActive || !hasAccess);
@@ -384,12 +410,9 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
                       ? 'bg-gray-500/30 backdrop-blur-sm'
                       : 'bg-white/20 backdrop-blur-sm group-hover:scale-110 group-hover:bg-white/30 shadow-2xl border border-white/30'
                   }`}>
-                    {(() => {
-                      const IconComponent = typeof app.icon === 'string' ? getIconComponent(app.icon) : app.icon;
-                      return <IconComponent className={`h-6 w-6 lg:h-8 lg:w-8 ${
-                        isDisabled ? 'text-gray-400' : 'text-white drop-shadow-lg'
-                      }`} />;
-                    })()}
+                    <IconComponent className={`h-6 w-6 lg:h-8 lg:w-8 ${
+                      isDisabled ? 'text-gray-400' : 'text-white drop-shadow-lg'
+                    }`} />
                   </div>
                   
                   {/* Access Status Indicator */}
