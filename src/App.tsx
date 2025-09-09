@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import LoginForm from './components/LoginForm';
 import AppSelector from './components/AppSelector';
 import ClientForm from './components/ClientForm';
+import { SSOManager } from './utils/sso';
 
 // Cliente Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -24,6 +25,9 @@ function App() {
       setLoading(false);
       return;
     }
+    
+    // Configurar SSO
+    SSOManager.setSupabaseClient(supabase);
 
     // Verificar sessão inicial
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
@@ -35,13 +39,27 @@ function App() {
       }
       
       setUser(session?.user ?? null);
+      
+      // Criar sessão SSO se usuário logado
+      if (session?.user) {
+        SSOManager.createSSOSession(session.user);
+      }
+      
       setLoading(false);
     });
 
     // Escutar mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setUser(session?.user ?? null);
+        
+        // Gerenciar sessões SSO baseado no evento
+        if (event === 'SIGNED_IN' && session?.user) {
+          await SSOManager.createSSOSession(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          await SSOManager.invalidateSSOSession();
+        }
+        
         setLoading(false);
       }
     );

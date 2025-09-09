@@ -49,6 +49,8 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState('');
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [ssoSessions, setSsoSessions] = useState<any[]>([]);
+  const [showSSOSessions, setShowSSOSessions] = useState(false);
 
   // Botões padrão
   const defaultButtons: ButtonConfig[] = [
@@ -124,6 +126,7 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
 
   useEffect(() => {
     loadSettings();
+    loadSSOSessions();
   }, []);
 
   const loadSettings = async () => {
@@ -184,6 +187,40 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
         ...prev,
         appearance: { ...prev.appearance, buttons: defaultButtons }
       }));
+    }
+  };
+
+  const loadSSOSessions = async () => {
+    if (!supabase || !user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('sso_sessions')
+        .select('*')
+        .eq('is_active', true)
+        .gte('expires_at', new Date().toISOString())
+        .order('last_used_at', { ascending: false });
+      
+      if (!error && data) {
+        setSsoSessions(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar sessões SSO:', error);
+    }
+  };
+
+  const invalidateSession = async (sessionId: string) => {
+    if (!supabase) return;
+    
+    try {
+      await supabase
+        .from('sso_sessions')
+        .update({ is_active: false })
+        .eq('id', sessionId);
+      
+      loadSSOSessions();
+    } catch (error) {
+      console.error('Erro ao invalidar sessão:', error);
     }
   };
 
@@ -402,6 +439,15 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setShowSSOSessions(true)}
+                className="px-4 py-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"
+              >
+                Sessões SSO ({ssoSessions.length})
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowUserManagement(true)}
                 className="px-4 py-2 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
               >
@@ -449,6 +495,75 @@ const ConfigurationPage: React.FC<ConfigurationPageProps> = ({ user, supabase, o
               {saveError}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de Sessões SSO */}
+      {showSSOSessions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Sessões SSO Ativas ({ssoSessions.length})
+                </h3>
+                <button
+                  onClick={() => setShowSSOSessions(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {ssoSessions.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Nenhuma sessão SSO ativa encontrada.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {ssoSessions.map((session) => (
+                    <div key={session.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <h4 className="font-medium text-gray-900 dark:text-white">
+                              {session.name || session.email}
+                            </h4>
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                            <p><strong>Email:</strong> {session.email}</p>
+                            <p><strong>Último uso:</strong> {new Date(session.last_used_at).toLocaleString('pt-BR')}</p>
+                            <p><strong>Expira em:</strong> {new Date(session.expires_at).toLocaleString('pt-BR')}</p>
+                            {session.user_agent && (
+                              <p><strong>Navegador:</strong> {session.user_agent.substring(0, 100)}...</p>
+                            )}
+                            {session.ip_address && (
+                              <p><strong>IP:</strong> {session.ip_address}</p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => invalidateSession(session.id)}
+                          className="px-3 py-1 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-sm"
+                        >
+                          Invalidar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
         </div>
       )}
 
