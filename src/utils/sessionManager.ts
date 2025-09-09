@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Cliente Supabase - projeto "armazenamento" compartilhado
+// Cliente Supabase - usar as mesmas credenciais em todos os sistemas
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let supabase = null;
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
-  console.log('🔗 Conectado ao projeto Supabase:', supabaseUrl);
 }
 
 /**

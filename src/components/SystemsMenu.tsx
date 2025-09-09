@@ -68,16 +68,6 @@ const SystemsMenu: React.FC<SystemsMenuProps> = ({ user }) => {
       isActive: true
     },
     { 
-      id: 'principal', 
-      name: 'Menu Principal', 
-      description: 'Voltar ao menu principal',
-      icon: Settings, 
-      color: 'gray',
-      gradient: 'from-gray-500 to-slate-600',
-      url: 'https://fotografo.site',
-      isActive: true
-    },
-    { 
       id: 'admin', 
       name: 'Admin', 
       description: 'Painel administrativo',
