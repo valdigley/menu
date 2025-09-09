@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import LoginForm from './components/LoginForm';
 import AppSelector from './components/AppSelector';
 import ClientForm from './components/ClientForm';
-import { SSOManager } from './utils/sso';
+import { createSharedSession, invalidateAllUserSessions } from './utils/sessionManager';
 
 // Cliente Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -25,9 +25,6 @@ function App() {
       setLoading(false);
       return;
     }
-    
-    // Configurar SSO
-    SSOManager.setSupabaseClient(supabase);
 
     // Verificar sessão inicial
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
@@ -40,9 +37,9 @@ function App() {
       
       setUser(session?.user ?? null);
       
-      // Criar sessão SSO se usuário logado
+      // Criar sessão compartilhada se usuário logado
       if (session?.user) {
-        SSOManager.createSSOSession(session.user);
+        createSharedSession(session.user.id);
       }
       
       setLoading(false);
@@ -53,11 +50,15 @@ function App() {
       async (event, session) => {
         setUser(session?.user ?? null);
         
-        // Gerenciar sessões SSO baseado no evento
+        // Gerenciar sessões compartilhadas baseado no evento
         if (event === 'SIGNED_IN' && session?.user) {
-          await SSOManager.createSSOSession(session.user);
+          await createSharedSession(session.user.id);
         } else if (event === 'SIGNED_OUT') {
-          await SSOManager.invalidateSSOSession();
+          // Invalidar todas as sessões do usuário ao fazer logout
+          const userData = user || session?.user;
+          if (userData) {
+            await invalidateAllUserSessions(userData.id);
+          }
         }
         
         setLoading(false);

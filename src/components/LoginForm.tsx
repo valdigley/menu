@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon, LockClosedIcon, UserPlusIcon } from '@heroicons/react/24/outline';
-import { SSOManager } from '../utils/sso';
+import { createSharedSession } from '../utils/sessionManager';
 
 interface LoginFormProps {
   supabase: any;
@@ -20,11 +20,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
 
   useEffect(() => {
-    // Configurar SSO
-    if (supabase) {
-      SSOManager.setSupabaseClient(supabase);
-    }
-    
     // Carregar configurações do sistema para tela de login
     const loadLoginSettings = async () => {
       try {
@@ -94,11 +89,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
         });
         if (error) throw error;
         
-        // Criar sessão SSO após login bem-sucedido
-        if (supabase) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await SSOManager.createSSOSession(user);
+        // ✅ ADICIONAR ESTA PARTE:
+        // Criar sessão compartilhada após login bem-sucedido
+        if (data.user) {
+          try {
+            const sessionToken = await createSharedSession(data.user.id);
+            if (sessionToken) {
+              console.log('✅ Sessão compartilhada criada para futuros acessos');
+              // Opcional: salvar no localStorage para uso posterior
+              localStorage.setItem('shared_session_token', sessionToken);
+            }
+          } catch (sessionError) {
+            console.warn('⚠️ Erro ao criar sessão compartilhada (não crítico):', sessionError);
           }
         }
         
@@ -119,10 +121,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
         });
         if (error) throw error;
         
-        // Criar sessão SSO após login bem-sucedido
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await SSOManager.createSSOSession(user);
+        // ✅ ADICIONAR ESTA PARTE:
+        // Criar sessão compartilhada após login bem-sucedido
+        if (data.user) {
+          try {
+            const sessionToken = await createSharedSession(data.user.id);
+            if (sessionToken) {
+              console.log('✅ Sessão compartilhada criada para futuros acessos');
+              // Opcional: salvar no localStorage para uso posterior
+              localStorage.setItem('shared_session_token', sessionToken);
+            }
+          } catch (sessionError) {
+            console.warn('⚠️ Erro ao criar sessão compartilhada (não crítico):', sessionError);
+          }
         }
       }
     } catch (err: any) {

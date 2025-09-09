@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
-import { SSOManager } from '../utils/sso';
+import { createSharedSession, invalidateAllUserSessions } from '../utils/sessionManager';
 import ConfigurationPage from './ConfigurationPage';
+import SystemsMenu from './SystemsMenu';
 
 interface SSOSession {
   id: string;
@@ -24,7 +25,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [showConfiguration, setShowConfiguration] = useState(false);
-  const [ssoSessions, setSsoSessions] = useState<SSOSession[]>([]);
+  const [showSystemsMenu, setShowSystemsMenu] = useState(false);
 
   useEffect(() => {
     // Detectar tema do sistema
@@ -40,14 +41,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   useEffect(() => {
     // Carregar configurações do sistema
     loadUserSettings();
-    
-    // Configurar SSO
-    if (supabase) {
-      SSOManager.setSupabaseClient(supabase);
-    }
-    
-    // Carregar sessões SSO
-    loadSSOSessions();
   }, [user]);
 
   const loadUserSettings = async () => {
@@ -114,28 +107,10 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
           console.error('Erro ao carregar configurações:', error);
         }
       }
-
-      // Se não há configurações, usar padrões
-      setWallpaperSettings(SSOManager.getDefaultSettings().appearance);
-      setCustomButtons(SSOManager.getDefaultSettings().appearance.buttons);
     } catch (error) {
       console.error('Erro ao carregar configurações do usuário:', error);
-      // Em caso de erro, usar configurações padrão
-      setWallpaperSettings(SSOManager.getDefaultSettings().appearance);
-      setCustomButtons(SSOManager.getDefaultSettings().appearance.buttons);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadSSOSessions = async () => {
-    if (!user || !supabase) return;
-    
-    try {
-      const sessions = await SSOManager.getUserSessions(user.id);
-      setSsoSessions(sessions);
-    } catch (error) {
-      console.error('Erro ao carregar sessões SSO:', error);
     }
   };
 
@@ -175,8 +150,10 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   };
 
   const handleSignOut = async () => {
-    // Invalidar sessão SSO antes de fazer logout
-    await SSOManager.invalidateSSOSession();
+    // Invalidar todas as sessões compartilhadas antes de fazer logout
+    if (user) {
+      await invalidateAllUserSessions(user.id);
+    }
     
     if (supabase) {
       await supabase.auth.signOut();
@@ -214,6 +191,90 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     // Recarregar configurações
     loadUserSettings();
   };
+
+  // Determinar wallpaper
+  const getBackgroundStyle = () => {
+    if (wallpaperSettings?.mainWallpaper) {
+      return {
+        backgroundImage: `url(${wallpaperSettings.mainWallpaper})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      };
+    }
+    
+    const gradientFrom = wallpaperSettings?.gradientFrom || '#3b82f6';
+    const gradientTo = wallpaperSettings?.gradientTo || '#1e40af';
+    
+    return {
+      background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`
+    };
+  };
+
+  // Mostrar menu de sistemas se não há botões customizados
+  if (showSystemsMenu || customButtons.length === 0) {
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center p-4 relative"
+        style={getBackgroundStyle()}
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
+        
+        {/* Header Controls */}
+        <div className="fixed top-4 left-4 right-4 flex justify-between items-center z-30">
+          <button
+            onClick={toggleTheme}
+            className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white/80 hover:text-white hover:bg-white/30 transition-colors shadow-lg border border-white/20"
+          >
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+
+          <div className="flex items-center gap-3">
+            {profile && (
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/20">
+                {profile.avatar_url && (
+                  <img
+                    src={profile.avatar_url}
+                    alt="Avatar"
+                    className="w-6 h-6 rounded-full"
+                  />
+                )}
+                <span className="text-sm text-white/90 font-medium max-w-32 truncate">
+                  {profile.full_name || profile.email}
+                </span>
+                {profile.is_master && (
+                  <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <span className="text-xs text-yellow-900">M</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {profile?.is_master && (
+              <button
+                onClick={() => setShowConfiguration(true)}
+                className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white/80 hover:text-white hover:bg-white/30 transition-colors shadow-lg border border-white/20"
+              >
+                <SettingsIcon className="h-5 w-5" />
+              </button>
+            )}
+            
+            <button
+              onClick={handleSignOut}
+              className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white/80 hover:text-red-400 hover:bg-red-500/20 transition-colors shadow-lg border border-white/20"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="w-full max-w-6xl mx-auto px-4 relative z-10">
+          <SystemsMenu user={user} />
+        </div>
+      </div>
+    );
+  }
 
   // Botões padrão
   const defaultApps = [
@@ -358,25 +419,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     );
   }
 
-  // Determinar wallpaper
-  const getBackgroundStyle = () => {
-    if (wallpaperSettings?.mainWallpaper) {
-      return {
-        backgroundImage: `url(${wallpaperSettings.mainWallpaper})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      };
-    }
-    
-    const gradientFrom = wallpaperSettings?.gradientFrom || '#3b82f6';
-    const gradientTo = wallpaperSettings?.gradientTo || '#1e40af';
-    
-    return {
-      background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`
-    };
-  };
-
   return (
     <div 
       className="min-h-screen flex items-center justify-center p-4 relative"
@@ -403,11 +445,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         <div className="flex items-center gap-3">
           {profile && (
             <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/20">
-              <div className="flex items-center gap-2">
-                {ssoSessions.length > 0 && (
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title={`${ssoSessions.length} sessão(ões) ativa(s)`}></div>
-                )}
-              </div>
               {profile.avatar_url && (
                 <img
                   src={profile.avatar_url}
@@ -490,9 +527,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
                   {app.name}
                   {isDisabled && (
                     <div className="text-xs text-gray-400 mt-1">Desativado</div>
-                  )}
-                  {!isDisabled && !SSOManager.isMasterUser(user) && (
-                    <div className="text-xs text-blue-300 mt-1">SSO Ativo</div>
                   )}
                   <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-t border-white/30"></div>
                 </div>
