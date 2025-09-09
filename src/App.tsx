@@ -26,9 +26,9 @@ function App() {
     }
 
     // Verificar sessão inicial
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error && error.message && error.message.includes('Refresh Token Not Found')) {
-        supabase.auth.signOut();
+        await supabase.auth.signOut();
         setUser(null);
         setLoading(false);
         return;
