@@ -6,14 +6,14 @@ import AppSelector from './components/AppSelector';
 import ClientForm from './components/ClientForm';
 import { createSharedSession, invalidateAllUserSessions } from './utils/sessionManager';
 
-// Cliente Supabase - projeto "armazenamento"
+// Cliente Supabase - projeto "armazenamento" compartilhado
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let supabase = null;
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
-  console.log('🔗 Conectado ao projeto armazenamento:', supabaseUrl);
+  console.log('🔗 Sistema principal conectado ao projeto armazenamento');
 }
 
 function App() {
