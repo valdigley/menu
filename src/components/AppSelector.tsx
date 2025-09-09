@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, LogOut, Settings } from 'lucide-react';
+import { Moon, Sun, LogOut } from 'lucide-react';
 import { getIconComponent } from '../utils/icons';
 import { createSharedSession, invalidateAllUserSessions } from '../utils/sessionManager';
 import ConfigurationPage from './ConfigurationPage';
@@ -256,7 +256,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
                 onClick={() => setShowConfiguration(true)}
                 className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white/80 hover:text-white hover:bg-white/30 transition-colors shadow-lg border border-white/20"
               >
-                <Settings className="h-5 w-5" />
+                <SettingsIcon className="h-5 w-5" />
               </button>
             )}
             
