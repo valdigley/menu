@@ -4,14 +4,6 @@ import { getIconComponent } from '../utils/icons';
 import { SSOManager } from '../utils/sso';
 import ConfigurationPage from './ConfigurationPage';
 
-interface SSOSession {
-  id: string;
-  token: string;
-  last_used_at: string;
-  user_agent: string;
-  ip_address: string;
-}
-
 interface AppSelectorProps {
   user: any;
   supabase: any;
@@ -24,7 +16,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [showConfiguration, setShowConfiguration] = useState(false);
-  const [ssoSessions, setSsoSessions] = useState<SSOSession[]>([]);
 
   useEffect(() => {
     // Detectar tema do sistema
@@ -40,14 +31,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   useEffect(() => {
     // Carregar configurações do sistema
     loadUserSettings();
-    
-    // Configurar SSO
-    if (supabase) {
-      SSOManager.setSupabaseClient(supabase);
-    }
-    
-    // Carregar sessões SSO
-    loadSSOSessions();
   }, [user]);
 
   const loadUserSettings = async () => {
@@ -128,17 +111,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
     }
   };
 
-  const loadSSOSessions = async () => {
-    if (!user || !supabase) return;
-    
-    try {
-      const sessions = await SSOManager.getUserSessions(user.id);
-      setSsoSessions(sessions);
-    } catch (error) {
-      console.error('Erro ao carregar sessões SSO:', error);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       loadUserData();
@@ -175,9 +147,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
   };
 
   const handleSignOut = async () => {
-    // Invalidar sessão SSO antes de fazer logout
-    await SSOManager.invalidateSSOSession();
-    
     if (supabase) {
       await supabase.auth.signOut();
     }
@@ -308,29 +277,10 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
       return;
     }
     
-    // Verificar acesso ao sistema antes de abrir
-    checkSystemAccessAndOpen(app);
-  };
-
-  const checkSystemAccessAndOpen = async (app: any) => {
-    try {
-      // Verificar se usuário tem acesso ao sistema
-      const hasAccess = await SSOManager.hasSystemAccess(user, app.id);
-      
-      if (!hasAccess && !SSOManager.isMasterUser(user)) {
-        alert(`Você não tem acesso ao sistema ${app.name}. Entre em contato com o administrador.`);
-        return;
-      }
-
-      // Abrir sistema com SSO
-      if (user && app.url && app.url !== '#') {
-        await SSOManager.openSystemWithSSO(app.url, user);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar acesso:', error);
-      // Fallback: abrir normalmente
+    // Usar SSO se disponível
+    if (user && app.url && app.url !== '#') {
       try {
-        await SSOManager.openSystemWithSSO(app.url, user);
+        SSOManager.openSystemWithSSO(app.url, user);
       } catch (error) {
         console.error('Erro no SSO, abrindo link normal:', error);
         window.open(app.url, '_blank');
@@ -403,11 +353,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
         <div className="flex items-center gap-3">
           {profile && (
             <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-white/20">
-              <div className="flex items-center gap-2">
-                {ssoSessions.length > 0 && (
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title={`${ssoSessions.length} sessão(ões) ativa(s)`}></div>
-                )}
-              </div>
               {profile.avatar_url && (
                 <img
                   src={profile.avatar_url}
@@ -418,11 +363,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
               <span className="text-sm text-white/90 font-medium max-w-32 truncate">
                 {profile.full_name || profile.email}
               </span>
-              {profile.is_master && (
-                <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <span className="text-xs text-yellow-900">M</span>
-                </div>
-              )}
             </div>
           )}
           
@@ -490,9 +430,6 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
                   {app.name}
                   {isDisabled && (
                     <div className="text-xs text-gray-400 mt-1">Desativado</div>
-                  )}
-                  {!isDisabled && !SSOManager.isMasterUser(user) && (
-                    <div className="text-xs text-blue-300 mt-1">SSO Ativo</div>
                   )}
                   <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-t border-white/30"></div>
                 </div>

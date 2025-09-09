@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon, LockClosedIcon, UserPlusIcon } from '@heroicons/react/24/outline';
-import { SSOManager } from '../utils/sso';
 
 interface LoginFormProps {
   supabase: any;
@@ -20,11 +19,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
   const [wallpaperSettings, setWallpaperSettings] = useState<any>(null);
 
   useEffect(() => {
-    // Configurar SSO
-    if (supabase) {
-      SSOManager.setSupabaseClient(supabase);
-    }
-    
     // Carregar configurações do sistema para tela de login
     const loadLoginSettings = async () => {
       try {
@@ -94,14 +88,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
         });
         if (error) throw error;
         
-        // Criar sessão SSO após login bem-sucedido
-        if (supabase) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await SSOManager.createSSOSession(user);
-          }
-        }
-        
         setSuccess('Conta criada com sucesso! Verifique seu email e confirme sua conta antes de fazer login.');
         // Limpar formulário
         setEmail('');
@@ -118,12 +104,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ supabase }) => {
           password
         });
         if (error) throw error;
-        
-        // Criar sessão SSO após login bem-sucedido
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await SSOManager.createSSOSession(user);
-        }
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao processar solicitação');
