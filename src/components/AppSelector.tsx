@@ -148,7 +148,16 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, supabase }) => {
 
   const handleSignOut = async () => {
     if (supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (error: any) {
+        // If session doesn't exist, user is effectively logged out
+        if (error?.message?.includes('Session from session_id claim in JWT does not exist')) {
+          console.warn('Session already invalid, user logged out');
+        } else {
+          console.error('Logout error:', error);
+        }
+      }
     }
   };
 
